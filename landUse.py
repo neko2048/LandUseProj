@@ -6,7 +6,7 @@ import tifffile as tiff
 import twd97
 import re 
 
-class LandUseData:
+class LandUseDataLoader:
     def __init__(self, anchorLon, anchorlat, dataInfo):
         self.anchorlon = anchorLon
         self.anchorlat = anchorlat
@@ -56,72 +56,58 @@ class LandUseData:
         self.lon = self.lon[initLonIdx:endLonIdx]
         self.lat = self.lat[initLatIdx:endLatIdx]
 
-    def getUrbanIndex(self):
+    def getCatIdx(self, catName):
         for idx, info in self.colorMap.items():
-            if "urban" in info[-1] or "Urban" in info[-1]:
-                urbanIndex = idx
-        return urbanIndex
+            if catName in info[-1]:
+                catIdx = idx
+                return catIdx
+        return None
 
-    def getWaterIndex(self):
-        waterIndex = 0
+    def getCatRatio(self, catName, excludeIdx):
+        numTotal = np.sum(self.landUse != excludeIdx)
         for idx, info in self.colorMap.items():
-            if "ater" in info[1]:
-                waterIndex = idx
-                break
-        return waterIndex
+            if idx != excludeIdx and info[1] == catName:
+                numTarget = np.sum(self.landUse == idx)
+                return(numTarget / numTotal*100)
+        return None
 
-    def getUrbanRatio(self):
-        urbanIndex = self.getUrbanIndex()
-        waterIndex = self.getWaterIndex()
-        numUrban = np.sum(self.landUse == urbanIndex)
-        numTotal = np.sum(self.landUse != waterIndex)
-        return numUrban / numTotal
-
-    def getEachCatRatio(self):
-        waterIndex = self.getWaterIndex()
-        numTotal = np.sum(self.landUse != waterIndex)
+    def getEveryCatRatio(self, excludeIdx):
+        numTotal = np.sum(self.landUse != excludeIdx)
         for idx, info in self.colorMap.items():
-            numTarget = np.sum(self.landUse == idx)
-            print(info, numTarget / numTotal*100)
+            if idx != excludeIdx:
+                numTarget = np.sum(self.landUse == idx)
+                print("{:30s}: {} %".format(info[1], numTarget / numTotal*100))
+            else:
+                print("{:30s}: {}".format(info[1], "Not be counted"))
+        return None
 
-    def drawYunLin(self):
+    def drawRegion(self, regionBound, labelBound=None, figsize=None):
         cmap = ListedColormap([x[0] for x in self.colorMap.values()])
         cmapTick = [x[1] for x in self.colorMap.values()]
-        fig = subplots(1, 1, figsize=(16, 7))
-        pcolormesh(self.lon, self.lat, self.landUse, 
-        vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
-        cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
-        cb.set_ticklabels(cmapTick)
-        xlim(initLon, endLon)
-        ylim(initLat, endLat)
-        title('{} LandUse'.format(self.landUseName))
-        savefig("{}_yunlin.jpg".format(self.landUseName), dpi=300)
-
-    def drawTaiwan(self, localDictBoundary=None):
-        cmap = ListedColormap([x[0] for x in self.colorMap.values()])
-        cmapTick = [x[1] for x in self.colorMap.values()]
-        fig = subplots(1, 1, figsize=(20, 20))
-        pcolormesh(self.lon, self.lat, self.landUse, 
+        lonLimit = np.logical_and(self.lon >= regionBound['initLon'], self.lon <= regionBound['endLon'])
+        latLimit = np.logical_and(self.lat >= regionBound['initLat'], self.lat <= regionBound['endLat'])
+        lon = self.lon[lonLimit]
+        lat = self.lat[latLimit]
+        landUse = self.landUse[latLimit][:, lonLimit]
+        fig = subplots(1, 1, figsize=(figsize or None))
+        pcolormesh(lon, lat, landUse, 
         vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         cb.set_ticklabels(cmapTick)
         cb.ax.tick_params(labelsize=17)
 
-        if localDictBoundary:
-            plot([localDictBoundary["initLon"], localDictBoundary["endLon"], localDictBoundary["endLon"], localDictBoundary["initLon"], localDictBoundary["initLon"]], 
-                 [localDictBoundary["initLat"], localDictBoundary["initLat"], localDictBoundary["endLat"], localDictBoundary["endLat"], localDictBoundary["initLat"]], 
+        if labelBound:
+            plot([labelBound["initLon"], labelBound["endLon"], labelBound["endLon"], labelBound["initLon"], labelBound["initLon"]], 
+                 [labelBound["initLat"], labelBound["initLat"], labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
                  color='red', linewidth=10)
-        xlim(taiwanDictBoundary["initLon"], taiwanDictBoundary["endLon"])
-        ylim(taiwanDictBoundary["initLat"], taiwanDictBoundary["endLat"])
-        title('{} LandUse'.format(self.landUseName), fontsize=30)
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
         yticks(fontsize=30)
-        savefig("{}_Taiwan.jpg".format(self.landUseName), dpi=300)
-
-
-
+        xlim(regionBound['initLon'], regionBound['endLon'])
+        ylim(regionBound['initLat'], regionBound['endLat'])
+        title('{} LandUse'.format(self.landUseName), fontsize=30)
+        savefig("{}_{}.jpg".format(self.landUseName, regionBound["regionName"]), dpi=300)
 
 
 class ESRI:
@@ -276,13 +262,15 @@ taiwanDictBoundary = {
 'initLon': taiwanInitLon,
 'endLon':  taiwanEndLon,  
 'initLat': taiwanInitLat,
-'endLat': taiwanEndLat
+'endLat': taiwanEndLat, 
+'regionName': "Taiwan", 
 }
 yunlinDictBoundary = {
 'initLon': yunInitLon,
 'endLon':  yunEndLon,  
 'initLat': yunInitLat,
-'endLat': yunEndLat
+'endLat': yunEndLat, 
+'regionName': "YunLin", 
 }
 # >>>>> data name >>>>>
 USGS_30Info = {
@@ -419,42 +407,41 @@ ESRI_10mInfo = {
 }
 # <<<<< data name <<<<<
 
-usgs = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
+usgs = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
 usgs.landUse = usgs.loadData()
 usgs.lon, usgs.lat = usgs.getLonLat()
 usgs.cutEdge(taiwanDictBoundary)
-usgs.drawTaiwan(localDictBoundary=None)
+print(usgs.getCatRatio(catName="urban", excludeIdx=16))
 #usgs.cutEdge(yunlinDictBoundary)
-#usgs.drawYunLin()
-#print(usgs.getUrbanRatio())
-#usgs.getEachCatRatio()
+#usgs.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
+#usgs.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
+#usgs.getEveryCatRatio()
 
-modis = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
+modis = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
 modis.landUse = modis.loadData()
 modis.lon, modis.lat = modis.getLonLat()
 modis.cutEdge(taiwanDictBoundary)
-modis.drawTaiwan(localDictBoundary=None)
-#modis.drawTaiwan(yunlinDictBoundary)
+print(modis.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
+#modis.drawRegion(taiwanDictBoundary, figsize=(20, 20))
 #modis.cutEdge(yunlinDictBoundary)
-#modis.drawYunLin()
 #print(modis.getUrbanRatio())
-#modis.getEachCatRatio()
+#modis.getEveryCatRatio()
 
-cjchen = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
-cjchen.landUse = cjchen.loadData() 
-cjchen.lon, cjchen.lat = cjchen.getLonLat()
-cjchen.cutEdge(taiwanDictBoundary)
+#cjchen = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
+#cjchen.landUse = cjchen.loadData() 
+#cjchen.lon, cjchen.lat = cjchen.getLonLat()
+#cjchen.cutEdge(taiwanDictBoundary)
 #cjchen.drawTaiwan(localDictBoundary=None)
 #cjchen.cutEdge(yunlinDictBoundary)
 #cjchen.drawYunLin()
 #print(cjchen.getUrbanRatio())
-#cjchen.getEachCatRatio()
+#cjchen.getEveryCatRatio()
 
-esri = ESRI(dataInfo = ESRI_10mInfo)
+#esri = ESRI(dataInfo = ESRI_10mInfo)
 # >>>>> draw Taiwan >>>>>
-esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
-esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
-esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
+#esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
+#esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
+#esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
 #esri.drawTaiwan(localDictBoundary=None)
 #print(esri.getTaiwanUrbanRatio())
 #esri.getTaiwanEachCateRatio()
