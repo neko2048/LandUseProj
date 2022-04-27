@@ -6,7 +6,7 @@ import tifffile as tiff
 import twd97
 import re 
 
-class landUseData:
+class LandUseData:
     def __init__(self, anchorLon, anchorlat, dataInfo):
         self.anchorlon = anchorLon
         self.anchorlat = anchorlat
@@ -419,7 +419,7 @@ ESRI_10mInfo = {
 }
 # <<<<< data name <<<<<
 
-usgs = landUseData(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
+usgs = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
 usgs.landUse = usgs.loadData()
 usgs.lon, usgs.lat = usgs.getLonLat()
 usgs.cutEdge(taiwanDictBoundary)
@@ -429,7 +429,7 @@ usgs.drawTaiwan(localDictBoundary=None)
 #print(usgs.getUrbanRatio())
 #usgs.getEachCatRatio()
 
-modis = landUseData(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
+modis = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
 modis.landUse = modis.loadData()
 modis.lon, modis.lat = modis.getLonLat()
 modis.cutEdge(taiwanDictBoundary)
@@ -440,7 +440,7 @@ modis.drawTaiwan(localDictBoundary=None)
 #print(modis.getUrbanRatio())
 #modis.getEachCatRatio()
 
-cjchen = landUseData(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
+cjchen = LandUseData(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
 cjchen.landUse = cjchen.loadData() 
 cjchen.lon, cjchen.lat = cjchen.getLonLat()
 cjchen.cutEdge(taiwanDictBoundary)
