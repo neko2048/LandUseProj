@@ -5,7 +5,6 @@ from matplotlib.colors import ListedColormap
 import tifffile as tiff
 import twd97
 import re 
-
 class LandUseDataLoader:
     def __init__(self, anchorLon, anchorlat, dataInfo):
         self.anchorlon = anchorLon
@@ -89,6 +88,8 @@ class LandUseDataLoader:
         lon = self.lon[lonLimit]
         lat = self.lat[latLimit]
         landUse = self.landUse[latLimit][:, lonLimit]
+        print(landUse[:, 0], len(landUse[:, 0]))
+        #landUse = np.full(fill_value=17, shape=landUse.shape)
         fig = subplots(1, 1, figsize=(figsize or None))
         pcolormesh(lon, lat, landUse, 
         vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
@@ -342,6 +343,40 @@ MODIS_15Info = {
     20: ["#69821b", "Barren Tundra"], 
     }
 }
+
+MODIS_5Info = {
+"landUseName": "MODIS_05s", 
+"folderDir": "/data/loach/share/toFS/",
+"baseLon":   0.00069444, # degree
+"baseLat": -89.99930556, # degree
+"dx": 0.00138889, # degree
+"dy": 0.00138889, # degree
+"tilex": 7200,
+"tiley": 7200,
+"colorMap": {
+    1:  ["#00552e", "Evergreen Needleleaf"], 
+    2:  ["#007b43", "Evergreen Broadleaf"], 
+    3:  ["#00552e", "Deciuous Needleleaf"], 
+    4:  ["#007b43", "Deciuous Broadleaf"], 
+    5:  ["#006e54", "Mixed Forests"], 
+    6:  ["#69b076", "Closed Shrublands"], 
+    7:  ["#69b076", "Open Shrublands"], 
+    8:  ["#69b076", "Woody Savannas"], 
+    9:  ["#69b076", "Savannas"], 
+    10: ["#69b076", "Grasslands"], 
+    11: ["#946243", "Permanent Wetlands"], 
+    12: ["#ecb400", "Cropland"], 
+    13: ["#e21417", "Urban and Built-up"], 
+    14: ["#ecb400", "Cropland/Natural Vegetation"], 
+    15: ["#ffffff", "Snow and Ice"], 
+    16: ["#c89932", "Barren or sparsely Vegetated"], 
+    17: ["#54aaea", "Water"], 
+    18: ["#69821b", "Wooded Tundra"], 
+    19: ["#69821b", "Mixed Tundra"], 
+    20: ["#69821b", "Barren Tundra"], 
+    }
+}
+
 CJCHEN_30Info = {
 "landUseName": "CJCHEN_30s", 
 "folderDir": "/data/loach/Data/GEOG.CJChen/landuse_30s/",
@@ -407,25 +442,37 @@ ESRI_10mInfo = {
 }
 # <<<<< data name <<<<<
 
-usgs = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
-usgs.landUse = usgs.loadData()
-usgs.lon, usgs.lat = usgs.getLonLat()
-usgs.cutEdge(taiwanDictBoundary)
-print(usgs.getCatRatio(catName="urban", excludeIdx=16))
+#usgs = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
+#usgs.landUse = usgs.loadData()
+#usgs.lon, usgs.lat = usgs.getLonLat()
+#usgs.cutEdge(taiwanDictBoundary)
+#print(usgs.getCatRatio(catName="urban", excludeIdx=16))
 #usgs.cutEdge(yunlinDictBoundary)
 #usgs.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
 #usgs.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-#usgs.getEveryCatRatio()
+#usgs.getEveryCatRatio(excludeIdx=16)
 
-modis = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
-modis.landUse = modis.loadData()
-modis.lon, modis.lat = modis.getLonLat()
-modis.cutEdge(taiwanDictBoundary)
-print(modis.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
-#modis.drawRegion(taiwanDictBoundary, figsize=(20, 20))
-#modis.cutEdge(yunlinDictBoundary)
-#print(modis.getUrbanRatio())
-#modis.getEveryCatRatio()
+##modis15 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
+##modis15.landUse = modis15.loadData()
+##modis15.lon, modis15.lat = modis15.getLonLat()
+#modis15.cutEdge(taiwanDictBoundary)
+#print(modis15.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
+#modis15.drawRegion(taiwanDictBoundary, figsize=(20, 20))
+#modis15.cutEdge(yunlinDictBoundary)
+#modis15.drawRegion(yunlinDictBoundary, figsize=(17, 6))
+#print(modis15.getUrbanRatio())
+#modis15.getEveryCatRatio()
+
+#modis5 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_5Info)
+#modis5.landUse = modis5.loadData()
+#modis5.lon, modis5.lat = modis5.getLonLat()
+#modis5.cutEdge(taiwanDictBoundary)
+#print(modis5.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
+#modis5.drawRegion(taiwanDictBoundary, figsize=(20, 20))
+#modis5.cutEdge(yunlinDictBoundary)
+#modis5.drawRegion(yunlinDictBoundary, figsize=(17, 6))
+#print(modis5.getUrbanRatio())
+#modis5.getEveryCatRatio()
 
 #cjchen = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
 #cjchen.landUse = cjchen.loadData() 
