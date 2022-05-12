@@ -7,5 +7,6 @@
     "dy": 0.00833333,
     "tilex": 1200,
     "tiley": 1200,
-    "numType": 24
+    "numType": 24,
+    "waterIdx": 16
 }

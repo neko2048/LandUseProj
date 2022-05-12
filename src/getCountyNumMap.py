@@ -5,8 +5,8 @@ from landUse import LandUseDataLoader
 
 if __name__ == "__main__":
     dataDirs = {
-    "landUseInfo": "../data/CJCHEN_30s.json", 
-    "colorMap": "../data/LU24type.json", 
+    "landUseInfo": "../data/MODIS_5s.json", 
+    "colorMap": "../data/LU20type.json", 
     #"countyNumMap": "../data/USGS_30s_countyNumMap.npy",
     }
     taiwanDictBoundary = {
