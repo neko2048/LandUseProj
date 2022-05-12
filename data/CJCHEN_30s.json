@@ -8,25 +8,5 @@
     "dy": 0.00833333,
     "tilex": 1200,
     "tiley": 1200,
-    "colorMap": {
-         "1": ["#e21417", "urban"], 
-         "2": ["#ecb400", "dryland"], 
-         "3": ["#ecb400", "irrigated cropland"], 
-         "4": ["#ecb400", "mixed dryland/irrigated"], 
-         "5": ["#ecb400", "cropland/grassland"], 
-         "6": ["#ecb400", "cropland/woodland"], 
-         "7": ["#69b076", "grassland"], 
-         "8": ["#69b076", "shrubland"], 
-         "9": ["#69b076", "mixed shrubland/grassland"], 
-        "10": ["#69b076", "savanna"], 
-        "11": ["#007b43", "deciduous broadleaf"], 
-        "12": ["#00552e", "deciduous needleleaf"], 
-        "13": ["#007b43", "evergreen broadleaf"], 
-        "14": ["#00552e", "evergreen needleleaf"], 
-        "15": ["#006e54", "mixed forest"], 
-        "16": ["#54aaea", "water bodies"], 
-        "17": ["#006e54", "herbaceous wetland"], 
-        "18": ["#006e54", "wooden wetland"], 
-        "19": ["#006e54", "barren or sparsely vegetated"]
-        }
-    }
+    "numType": 20
+}

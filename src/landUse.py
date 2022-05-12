@@ -7,7 +7,9 @@ import twd97
 import re
 import json
 class LandUseDataLoader:
-    def __init__(self, anchorLon, anchorlat, dataInfo, colorMap):
+    def __init__(self, anchorLon, anchorlat, dataDirs):
+        self.dataDirs = dataDirs
+        dataInfo = self.getJSON("landUseInfo")
         self.anchorlon = anchorLon
         self.anchorlat = anchorlat
         self.landUseName = dataInfo["landUseName"]
@@ -18,7 +20,15 @@ class LandUseDataLoader:
         self.dy = dataInfo["dy"]
         self.tilex = dataInfo["tilex"]
         self.tiley = dataInfo["tiley"]
-        self.colorMap = colorMap
+        self.numType = dataInfo["numType"]
+        self.colorMap = self.getJSON("colorMap")
+        if "countyNumMap" in self.dataDirs.keys():
+            self.countyNumMap = np.load(self.dataDirs["countyNumMap"])
+
+    def getJSON(self, name):
+        with open(self.dataDirs[name]) as jsonFile:
+            jsonData = json.load(jsonFile)
+        return jsonData
 
     def getFileName(self):
         gridLon, gridLat = (self.anchorlon - self.baseLon)/self.dx, (self.anchorlat - self.baseLat)/self.dy
@@ -55,6 +65,8 @@ class LandUseDataLoader:
         self.landUse = self.landUse[initLatIdx:endLatIdx, initLonIdx:endLonIdx]
         self.lon = self.lon[initLonIdx:endLonIdx]
         self.lat = self.lat[initLatIdx:endLatIdx]
+        if hasattr(self, "countyNumMap"):
+            self.countyNumMap = self.countyNumMap[initLatIdx:endLatIdx, initLonIdx:endLonIdx]
 
     def getCatIdx(self, catName):
         for idx, info in self.colorMap.items():
@@ -104,6 +116,7 @@ class LandUseDataLoader:
             plot([labelBound["initLon"], labelBound["endLon"], labelBound["endLon"], labelBound["initLon"], labelBound["initLon"]], 
                  [labelBound["initLat"], labelBound["initLat"], labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
                  color='red', linewidth=10)
+        contour(luDataLoader.lon, luDataLoader.lat, np.isnan(luDataLoader.countyNumMap), colors='black')
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
@@ -116,6 +129,11 @@ class LandUseDataLoader:
 
 
 if __name__ == "__main__":
+    dataDirs = {
+    "landUseInfo": "../data/CJCHEN_30s.json", 
+    "colorMap": "../data/LU24type.json", 
+    "countyNumMap": "../data/CJCHEN_30s_countyNumMap.npy",
+    }
     taiwanDictBoundary = {
     'initLon': 120,
     'endLon':  122.282366,  
@@ -130,25 +148,8 @@ if __name__ == "__main__":
     'endLat': 23.9194608, 
     'regionName': "YunLin", 
     }
-    # >>>>> data name >>>>>
-    with open("../data/USGS_30s.json") as jsonFile:
-        USGS_30Info = json.load(jsonFile)
-    with open("../data/MODIS_15s.json") as jsonFile:
-        MODIS_15Info = json.load(jsonFile)
-    with open("../data/MODIS_5s.json") as jsonFile:
-        MODIS_5Info = json.load(jsonFile)
-    with open("../data/CJCHEN_30s.json") as jsonFile:
-        CJCHEN_30Info = json.load(jsonFile)
 
-    with open("../data/LU20type.json") as jsonFile:
-        LU20type = json.load(jsonFile)
-    with open("../data/LU24type.json") as jsonFile:
-        LU24type = json.load(jsonFile)
-
-    # <<<<< data name <<<<<
-    targetLandUseInfo = USGS_30Info
-    colorMap = LU24type
-    luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=targetLandUseInfo, colorMap=colorMap)
+    luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
     luDataLoader.landUse = luDataLoader.loadData()
     luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
     luDataLoader.cutEdge(taiwanDictBoundary)
@@ -156,6 +157,6 @@ if __name__ == "__main__":
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
+    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=(20, 20))
     #luDataLoader.getEveryCatRatio(excludeIdx=16)
-    
 
