@@ -104,6 +104,7 @@ class LandUseDataLoader:
         lon = self.lon[lonLimit]
         lat = self.lat[latLimit]
         landUse = self.landUse[latLimit][:, lonLimit]
+        countyNumMap = self.countyNumMap[latLimit][:, lonLimit]
         #landUse = np.full(fill_value=17, shape=landUse.shape)
         fig = subplots(1, 1, figsize=(figsize or None))
         pcolormesh(lon, lat, landUse, 
@@ -116,7 +117,8 @@ class LandUseDataLoader:
             plot([labelBound["initLon"], labelBound["endLon"], labelBound["endLon"], labelBound["initLon"], labelBound["initLon"]], 
                  [labelBound["initLat"], labelBound["initLat"], labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
                  color='red', linewidth=10)
-        contour(luDataLoader.lon, luDataLoader.lat, np.isnan(luDataLoader.countyNumMap), colors='black')
+        if hasattr(self, "countyNumMap"):
+            contour(lon, lat, np.isnan(countyNumMap), colors='black')
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
