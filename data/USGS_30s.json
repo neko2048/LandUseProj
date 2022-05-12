@@ -1,0 +1,10 @@
+{
+    "landUseName": "USGS_30s",
+    "folderDir": "/data/loach/Data/GEOG/landuse_30s/",
+    "baseLon": -179.99583,
+    "baseLat": -89.99583,
+    "dx": 0.00833333,
+    "dy": 0.00833333,
+    "tilex": 1200,
+    "tiley": 1200
+}

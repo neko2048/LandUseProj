@@ -1,0 +1,29 @@
+{
+    "landUseName": "ESRI_10m", 
+    "southFileDir": "../ESRI/51Q100_lonlat.tif",
+    "southBound": {
+        "initLon": 119.185517,
+        "endLon" : 124.36715,
+        "initLat": 15.234567,
+        "endLat" : 24.435789
+    },
+    "northFileDir": "../ESRI/51R100_lonlat.tif",
+    "northBound": {
+        "initLon": 118.598375,
+        "endLon" : 127.363256,
+        "initLat": 23.300906,
+        "endLat" : 32.572875
+    },
+    "colorMap": { 
+         "1": ["#429bde", "Water"], 
+         "2": ["#3a7d47", "Trees"], 
+         "3": ["#88af52", "Grass"], 
+         "4": ["#748bc2", "Flooded vegetation"], 
+         "5": ["#e3c765", "Crops"], 
+         "6": ["#d7be9f", "Scrub/shrub"], 
+         "7": ["#d5203f", "Built Area"], 
+         "8": ["#a59b8f", "Bare ground"], 
+         "9": ["#ffffff", "Snow/Ice"], 
+        "10": ["#000000", "Clouds"]
+    }
+}

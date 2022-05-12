@@ -4,9 +4,10 @@ import re
 from matplotlib.colors import ListedColormap
 import tifffile as tiff
 import twd97
-import re 
+import re
+import json
 class LandUseDataLoader:
-    def __init__(self, anchorLon, anchorlat, dataInfo):
+    def __init__(self, anchorLon, anchorlat, dataInfo, colorMap):
         self.anchorlon = anchorLon
         self.anchorlat = anchorlat
         self.landUseName = dataInfo["landUseName"]
@@ -17,7 +18,7 @@ class LandUseDataLoader:
         self.dy = dataInfo["dy"]
         self.tilex = dataInfo["tilex"]
         self.tiley = dataInfo["tiley"]
-        self.colorMap = dataInfo["colorMap"]
+        self.colorMap = colorMap
 
     def getFileName(self):
         gridLon, gridLat = (self.anchorlon - self.baseLon)/self.dx, (self.anchorlat - self.baseLat)/self.dy
@@ -57,6 +58,7 @@ class LandUseDataLoader:
 
     def getCatIdx(self, catName):
         for idx, info in self.colorMap.items():
+            idx = int(idx)
             if catName in info[-1]:
                 catIdx = idx
                 return catIdx
@@ -65,6 +67,7 @@ class LandUseDataLoader:
     def getCatRatio(self, catName, excludeIdx):
         numTotal = np.sum(self.landUse != excludeIdx)
         for idx, info in self.colorMap.items():
+            idx = int(idx)
             if idx != excludeIdx and info[1] == catName:
                 numTarget = np.sum(self.landUse == idx)
                 return(numTarget / numTotal*100)
@@ -73,6 +76,7 @@ class LandUseDataLoader:
     def getEveryCatRatio(self, excludeIdx):
         numTotal = np.sum(self.landUse != excludeIdx)
         for idx, info in self.colorMap.items():
+            idx = int(idx)
             if idx != excludeIdx:
                 numTarget = np.sum(self.landUse == idx)
                 print("{:30s}: {} %".format(info[1], numTarget / numTotal*100))
@@ -88,11 +92,10 @@ class LandUseDataLoader:
         lon = self.lon[lonLimit]
         lat = self.lat[latLimit]
         landUse = self.landUse[latLimit][:, lonLimit]
-        print(landUse[:, 0], len(landUse[:, 0]))
         #landUse = np.full(fill_value=17, shape=landUse.shape)
         fig = subplots(1, 1, figsize=(figsize or None))
         pcolormesh(lon, lat, landUse, 
-        vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         cb.set_ticklabels(cmapTick)
         cb.ax.tick_params(labelsize=17)
@@ -252,250 +255,65 @@ class ESRI:
         xticks(fontsize=30)
         yticks(fontsize=30)
         savefig("{}_Taiwan.jpg".format(self.landUseName), dpi=600)
-
-# >>>>> user defined >>>>>
-taiwanInitLon, taiwanEndLon = 120, 122.282366
-yunInitLon, yunEndLon = 120.01, 121.00
-taiwanInitLat, taiwanEndLat = 21.752632, 25.459580
-yunInitLat, yunEndLat = 23.4853847, 23.9194608
-# <<<<< user defined <<<<<
-taiwanDictBoundary = {
-'initLon': taiwanInitLon,
-'endLon':  taiwanEndLon,  
-'initLat': taiwanInitLat,
-'endLat': taiwanEndLat, 
-'regionName': "Taiwan", 
-}
-yunlinDictBoundary = {
-'initLon': yunInitLon,
-'endLon':  yunEndLon,  
-'initLat': yunInitLat,
-'endLat': yunEndLat, 
-'regionName': "YunLin", 
-}
-# >>>>> data name >>>>>
-USGS_30Info = {
-"landUseName": "USGS_30s", 
-"folderDir": "/data/loach/Data/GEOG/landuse_30s/",
-"baseLon": -179.99583,  # degree
-"baseLon": -179.99583, # degree
-"baseLat": -89.99583, # degree
-"dx": 0.00833333, # degree
-"dy": 0.00833333, # degree
-"tilex": 1200,
-"tiley": 1200,
-"colorMap": { # USGS
-     1: ["#e21417", "urban"], 
-     2: ["#ecb400", "dryland"], 
-     3: ["#ecb400", "irrigated cropland"], 
-     4: ["#ecb400", "mixed dryland/irrigated"], 
-     5: ["#ecb400", "cropland/grassland"], 
-     6: ["#ecb400", "cropland/woodland"], 
-     7: ["#69b076", "grassland"], 
-     8: ["#69b076", "shrubland"], 
-     9: ["#69b076", "mixed shrubland/grassland"], 
-    10: ["#69b076", "savanna"], 
-    11: ["#007b43", "deciduous broadleaf"], 
-    12: ["#00552e", "deciduous needleleaf"], 
-    13: ["#007b43", "evergreen broadleaf"], 
-    14: ["#00552e", "evergreen needleleaf"], 
-    15: ["#006e54", "mixed forest"], 
-    16: ["#54aaea", "water bodies"], 
-    17: ["#946243", "herbaceous wetland"], 
-    18: ["#946243", "wooden wetland"], 
-    19: ["#c89932", "barren or sparsely vegetated"], 
-    20: ["#69821b", "herbaceous tundra"], 
-    21: ["#69821b", "wooded tundra"], 
-    22: ["#69821b", "mixed tundra"], 
-    23: ["#69821b", "bare ground tundra"], 
-    24: ["#ffffff", "snow or ice"], 
+if __name__ == "__main__":
+    taiwanDictBoundary = {
+    'initLon': 120,
+    'endLon':  122.282366,  
+    'initLat': 21.752632,
+    'endLat': 25.459580, 
+    'regionName': "Taiwan", 
     }
-}
-MODIS_15Info = {
-"landUseName": "MODIS_15s", 
-"folderDir": "/data/loach/Data/GEOG/modis_landuse_20class_15s/",
-"baseLon": -179.9979167, # degree
-"baseLat": -89.9979167, # degree
-"dx": 0.00416667, # degree
-"dy": 0.00416667, # degree
-"tilex": 2400,
-"tiley": 2400,
-"colorMap": {
-    1:  ["#00552e", "Evergreen Needleleaf"], 
-    2:  ["#007b43", "Evergreen Broadleaf"], 
-    3:  ["#00552e", "Deciuous Needleleaf"], 
-    4:  ["#007b43", "Deciuous Broadleaf"], 
-    5:  ["#006e54", "Mixed Forests"], 
-    6:  ["#69b076", "Closed Shrublands"], 
-    7:  ["#69b076", "Open Shrublands"], 
-    8:  ["#69b076", "Woody Savannas"], 
-    9:  ["#69b076", "Savannas"], 
-    10: ["#69b076", "Grasslands"], 
-    11: ["#946243", "Permanent Wetlands"], 
-    12: ["#ecb400", "Cropland"], 
-    13: ["#e21417", "Urban and Built-up"], 
-    14: ["#ecb400", "Cropland/Natural Vegetation"], 
-    15: ["#ffffff", "Snow and Ice"], 
-    16: ["#c89932", "Barren or sparsely Vegetated"], 
-    17: ["#54aaea", "Water"], 
-    18: ["#69821b", "Wooded Tundra"], 
-    19: ["#69821b", "Mixed Tundra"], 
-    20: ["#69821b", "Barren Tundra"], 
+    yunlinDictBoundary = {
+    'initLon': 120.01,
+    'endLon':  121.00,  
+    'initLat': 23.4853847,
+    'endLat': 23.9194608, 
+    'regionName': "YunLin", 
     }
-}
+    # >>>>> data name >>>>>
+    with open("../data/USGS_30s.json") as jsonFile:
+        USGS_30Info = json.load(jsonFile)
+    with open("../data/MODIS_15s.json") as jsonFile:
+        MODIS_15Info = json.load(jsonFile)
+    with open("../data/MODIS_5s.json") as jsonFile:
+        MODIS_5Info = json.load(jsonFile)
+    with open("../data/CJCHEN_30s.json") as jsonFile:
+        CJCHEN_30Info = json.load(jsonFile)
+    with open("../data/ESRI_10m.json") as jsonFile:
+        ESRI_10mInfo = json.load(jsonFile) # not test yet
+    # landUse type: https://www.arcgis.com/home/item.html?id=d6642f8a4f6d4685a24ae2dc0c73d4ac
 
-MODIS_5Info = {
-"landUseName": "MODIS_05s", 
-"folderDir": "/data/loach/share/toFS/",
-"baseLon":   0.00069444, # degree
-"baseLat": -89.99930556, # degree
-"dx": 0.00138889, # degree
-"dy": 0.00138889, # degree
-"tilex": 7200,
-"tiley": 7200,
-"colorMap": {
-    1:  ["#00552e", "Evergreen Needleleaf"], 
-    2:  ["#007b43", "Evergreen Broadleaf"], 
-    3:  ["#00552e", "Deciuous Needleleaf"], 
-    4:  ["#007b43", "Deciuous Broadleaf"], 
-    5:  ["#006e54", "Mixed Forests"], 
-    6:  ["#69b076", "Closed Shrublands"], 
-    7:  ["#69b076", "Open Shrublands"], 
-    8:  ["#69b076", "Woody Savannas"], 
-    9:  ["#69b076", "Savannas"], 
-    10: ["#69b076", "Grasslands"], 
-    11: ["#946243", "Permanent Wetlands"], 
-    12: ["#ecb400", "Cropland"], 
-    13: ["#e21417", "Urban and Built-up"], 
-    14: ["#ecb400", "Cropland/Natural Vegetation"], 
-    15: ["#ffffff", "Snow and Ice"], 
-    16: ["#c89932", "Barren or sparsely Vegetated"], 
-    17: ["#54aaea", "Water"], 
-    18: ["#69821b", "Wooded Tundra"], 
-    19: ["#69821b", "Mixed Tundra"], 
-    20: ["#69821b", "Barren Tundra"], 
-    }
-}
+    with open("../data/LU20type.json") as jsonFile:
+        LU20type = json.load(jsonFile)
+    with open("../data/LU24type.json") as jsonFile:
+        LU24type = json.load(jsonFile)
 
-CJCHEN_30Info = {
-"landUseName": "CJCHEN_30s", 
-"folderDir": "/data/loach/Data/GEOG.CJChen/landuse_30s/",
-"baseLon": -179.99583,  # degree
-"baseLon": -179.99583, # degree
-"baseLat": -89.99583, # degree
-"dx": 0.00833333, # degree
-"dy": 0.00833333, # degree
-"tilex": 1200,
-"tiley": 1200,
-"colorMap": {
-     1: ["#e21417", "urban"], 
-     2: ["#ecb400", "dryland"], 
-     3: ["#ecb400", "irrigated cropland"], 
-     4: ["#ecb400", "mixed dryland/irrigated"], 
-     5: ["#ecb400", "cropland/grassland"], 
-     6: ["#ecb400", "cropland/woodland"], 
-     7: ["#69b076", "grassland"], 
-     8: ["#69b076", "shrubland"], 
-     9: ["#69b076", "mixed shrubland/grassland"], 
-    10: ["#69b076", "savanna"], 
-    11: ["#007b43", "deciduous broadleaf"], 
-    12: ["#00552e", "deciduous needleleaf"], 
-    13: ["#007b43", "evergreen broadleaf"], 
-    14: ["#00552e", "evergreen needleleaf"], 
-    15: ["#006e54", "mixed forest"], 
-    16: ["#54aaea", "water bodies"], 
-    17: ["#006e54", "herbaceous wetland"], 
-    18: ["#006e54", "wooden wetland"], 
-    19: ["#006e54", "barren or sparsely vegetated"], 
-    }
-}
-
-ESRI_10mInfo = {
-"landUseName": "ESRI_10m", 
-"southFileDir": "./ESRI/51Q100_lonlat.tif",
-"southBound": {
-    "initLon": 119.185517,
-    "endLon" : 124.36715,
-    "initLat": 15.234567,
-    "endLat" : 24.435789,
-    },
-"northFileDir": "./ESRI/51R100_lonlat.tif",
-"northBound": {
-    "initLon": 118.598375,
-    "endLon" : 127.363256,
-    "initLat": 23.300906,
-    "endLat" : 32.572875,
-    },
-"colorMap": { # https://www.arcgis.com/home/item.html?id=d6642f8a4f6d4685a24ae2dc0c73d4ac
-     1: ["#429bde", "Water"], 
-     2: ["#3a7d47", "Trees"], 
-     3: ["#88af52", "Grass"], 
-     4: ["#748bc2", "Flooded vegetation"], 
-     5: ["#e3c765", "Crops"], 
-     6: ["#d7be9f", "Scrub/shrub"], 
-     7: ["#d5203f", "Built Area"], 
-     8: ["#a59b8f", "Bare ground"], 
-     9: ["#ffffff", "Snow/Ice"], 
-    10: ["#000000", "Clouds"], 
-
-    }
-}
-# <<<<< data name <<<<<
-
-#usgs = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=USGS_30Info)
-#usgs.landUse = usgs.loadData()
-#usgs.lon, usgs.lat = usgs.getLonLat()
-#usgs.cutEdge(taiwanDictBoundary)
-#print(usgs.getCatRatio(catName="urban", excludeIdx=16))
-#usgs.cutEdge(yunlinDictBoundary)
-#usgs.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
-#usgs.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-#usgs.getEveryCatRatio(excludeIdx=16)
-
-##modis15 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_15Info)
-##modis15.landUse = modis15.loadData()
-##modis15.lon, modis15.lat = modis15.getLonLat()
-#modis15.cutEdge(taiwanDictBoundary)
-#print(modis15.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
-#modis15.drawRegion(taiwanDictBoundary, figsize=(20, 20))
-#modis15.cutEdge(yunlinDictBoundary)
-#modis15.drawRegion(yunlinDictBoundary, figsize=(17, 6))
-#print(modis15.getUrbanRatio())
-#modis15.getEveryCatRatio()
-
-#modis5 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=MODIS_5Info)
-#modis5.landUse = modis5.loadData()
-#modis5.lon, modis5.lat = modis5.getLonLat()
-#modis5.cutEdge(taiwanDictBoundary)
-#print(modis5.getCatRatio(catName="Urban and Built-up", excludeIdx=17))
-#modis5.drawRegion(taiwanDictBoundary, figsize=(20, 20))
-#modis5.cutEdge(yunlinDictBoundary)
-#modis5.drawRegion(yunlinDictBoundary, figsize=(17, 6))
-#print(modis5.getUrbanRatio())
-#modis5.getEveryCatRatio()
-
-#cjchen = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=CJCHEN_30Info)
-#cjchen.landUse = cjchen.loadData() 
-#cjchen.lon, cjchen.lat = cjchen.getLonLat()
-#cjchen.cutEdge(taiwanDictBoundary)
-#cjchen.drawTaiwan(localDictBoundary=None)
-#cjchen.cutEdge(yunlinDictBoundary)
-#cjchen.drawYunLin()
-#print(cjchen.getUrbanRatio())
-#cjchen.getEveryCatRatio()
-
-#esri = ESRI(dataInfo = ESRI_10mInfo)
-# >>>>> draw Taiwan >>>>>
-#esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
-#esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
-#esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
-#esri.drawTaiwan(localDictBoundary=None)
-#print(esri.getTaiwanUrbanRatio())
-#esri.getTaiwanEachCateRatio()
-
-# >>>>> draw YunLin >>>>>
-#esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
-#esri.cutEdge(yunlinDictBoundary)
-#esri.drawYunLin()
-#print(esri.getUrbanRatio())
-
+    # <<<<< data name <<<<<
+    targetLandUseInfo = USGS_30Info
+    colorMap = LU24type
+    luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataInfo=targetLandUseInfo, colorMap=colorMap)
+    luDataLoader.landUse = luDataLoader.loadData()
+    luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
+    luDataLoader.cutEdge(taiwanDictBoundary)
+    print(luDataLoader.getCatRatio(catName="urban", excludeIdx=16))
+    luDataLoader.cutEdge(yunlinDictBoundary)
+    luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
+    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
+    luDataLoader.getEveryCatRatio(excludeIdx=16)
+    
+    #esri = ESRI(dataInfo = ESRI_10mInfo)
+    # >>>>> draw Taiwan >>>>>
+    #esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
+    #esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
+    #esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
+    #esri.drawTaiwan(localDictBoundary=None)
+    #print(esri.getTaiwanUrbanRatio())
+    #esri.getTaiwanEachCateRatio()
+    
+    # >>>>> draw YunLin >>>>>
+    #esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
+    #esri.cutEdge(yunlinDictBoundary)
+    #esri.drawYunLin()
+    #print(esri.getUrbanRatio())
+    
+    
