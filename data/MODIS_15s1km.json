@@ -1,0 +1,13 @@
+{
+    "landUseName": "MODIS_15s1km", 
+    "folderDir": "/data/loach/share/toFS/tw-1km-dom-geo/",
+	"fileName": "geo_em.d03.nc-modis15s",
+    "baseLon":   0.00069444,
+    "baseLat": -89.99930556,
+    "dx": 0.00138889,
+    "dy": 0.00138889,
+    "tilex": 798,
+    "tiley": 918,
+    "numType": 20,
+    "waterIdx": 17
+}

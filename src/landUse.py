@@ -1,27 +1,25 @@
 import numpy as np
 from matplotlib.pyplot import *
-import re
 from matplotlib.colors import ListedColormap
-import tifffile as tiff
-import twd97
-import re
 import json
+import netCDF4
+
 class LandUseDataLoader:
     def __init__(self, anchorLon, anchorlat, dataDirs):
         self.dataDirs = dataDirs
-        dataInfo = self.getJSON("landUseInfo")
+        self.dataInfo = self.getJSON("landUseInfo")
         self.anchorlon = anchorLon
         self.anchorlat = anchorlat
-        self.landUseName = dataInfo["landUseName"]
-        self.dirName = dataInfo["folderDir"]
-        self.baseLon = dataInfo["baseLon"]
-        self.baseLat = dataInfo["baseLat"]
-        self.dx = dataInfo["dx"]
-        self.dy = dataInfo["dy"]
-        self.tilex = dataInfo["tilex"]
-        self.tiley = dataInfo["tiley"]
-        self.numType = dataInfo["numType"]
-        self.waterIdx = int(dataInfo["waterIdx"])
+        self.landUseName = self.dataInfo["landUseName"]
+        self.dirName = self.dataInfo["folderDir"]
+        self.baseLon = self.dataInfo["baseLon"]
+        self.baseLat = self.dataInfo["baseLat"]
+        self.dx = self.dataInfo["dx"]
+        self.dy = self.dataInfo["dy"]
+        self.tilex = self.dataInfo["tilex"]
+        self.tiley = self.dataInfo["tiley"]
+        self.numType = self.dataInfo["numType"]
+        self.waterIdx = int(self.dataInfo["waterIdx"])
         self.colorMap = self.getJSON("colorMap")
         if "countyNumMap" in self.dataDirs.keys():
             self.countyNumMap = np.load(self.dataDirs["countyNumMap"])
@@ -83,7 +81,7 @@ class LandUseDataLoader:
             for idx, info in self.colorMap.items():
                 idx = int(idx)
                 if info[1] == catName:
-                    numTarget = np.sum(self.landUse == idx)
+                    numTarget = np.sum(self.landUse[~np.isnan(self.countyNumMap)] == idx)
                     return(numTarget / numTotal*100)
         else:
             numTotal = np.sum(self.landUse != self.waterIdx)
@@ -102,7 +100,7 @@ class LandUseDataLoader:
         for idx, info in self.colorMap.items():
             idx = int(idx)
             if idx != self.waterIdx:
-                numTarget = np.sum(self.landUse == idx)
+                numTarget = np.sum(self.landUse[~np.isnan(self.countyNumMap)] == idx)
                 print("{:30s}: {} %".format(info[1], numTarget / numTotal*100))
             elif idx == self.waterIdx and hasattr(self, "countyNumMap"):
                 numTarget = np.sum(np.logical_and((1 - np.isnan(self.countyNumMap)), self.landUse == idx))
@@ -139,7 +137,8 @@ class LandUseDataLoader:
                  color='red', linewidth=10)
         if hasattr(self, "countyNumMap"):
             countyNumMap = self.countyNumMap[latLimit][:, lonLimit]
-            contour(lon, lat, np.isnan(countyNumMap), colors='black')
+            contour(lon, lat, ~np.isnan(countyNumMap), colors='black')
+            contour(lon, lat, countyNumMap, colors='black')
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
@@ -149,13 +148,61 @@ class LandUseDataLoader:
         title('{} LandUse'.format(self.landUseName), fontsize=30)
         savefig("{}_{}.jpg".format(self.landUseName, regionBound["regionName"]), dpi=300)
 
+class GeoDataLoader(LandUseDataLoader):
+    def loadData(self):
+        data = np.array(netCDF4.Dataset(str(self.dirName+self.dataInfo["fileName"]))["LU_INDEX"])[0]
+        return np.array(data)
 
+    def getLonLat(self):
+        lon = np.array(netCDF4.Dataset(str(self.dirName+self.dataInfo["fileName"]))["XLONG_M"])[0]
+        lat = np.array(netCDF4.Dataset(str(self.dirName+self.dataInfo["fileName"]))["XLAT_M"])[0]
+        return lon, lat
+
+    def cutEdge(self, dictBoundary):
+        latBound = np.logical_and(self.lat >= dictBoundary['initLat'], self.lat <= dictBoundary['endLat'])
+        lonBound = np.logical_and(self.lon >= dictBoundary['initLon'], self.lon <= dictBoundary['endLon'])
+        bound = np.logical_and(latBound, lonBound)
+        self.landUse = self.landUse * bound
+
+    def drawRegion(self, regionBound, labelBound=None, figsize=None):
+        cmap = ListedColormap([x[0] for x in self.colorMap.values()])
+        cmapTick = [x[1] for x in self.colorMap.values()]
+        lon = self.lon
+        lat = self.lat
+        landUse = self.landUse
+        #landUse = np.full(fill_value=17, shape=landUse.shape)
+        fig = subplots(1, 1, figsize=(figsize or None))
+        pcolormesh(lon, lat, landUse, 
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
+        cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
+        cb.set_ticklabels(cmapTick)
+        cb.ax.tick_params(labelsize=17)
+
+        if labelBound:
+            plot([labelBound["initLon"], labelBound["endLon"], labelBound["endLon"], labelBound["initLon"], labelBound["initLon"]], 
+                 [labelBound["initLat"], labelBound["initLat"], labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
+                 color='red', linewidth=10)
+        if hasattr(self, "countyNumMap"):
+            countyNumMap = self.countyNumMap
+            contour(lon, lat, ~np.isnan(countyNumMap), colors='black')
+            contour(lon, lat, countyNumMap, colors='black')
+        xlabel('Longitude', fontsize=30)
+        ylabel('Latitude', fontsize=30)
+        xticks(fontsize=30)
+        yticks(fontsize=30)
+        xlim(regionBound['initLon'], regionBound['endLon'])
+        ylim(regionBound['initLat'], regionBound['endLat'])
+        title('{} LandUse'.format(self.landUseName), fontsize=30)
+        savefig("{}_{}.jpg".format(self.landUseName, regionBound["regionName"]), dpi=300)
 
 if __name__ == "__main__":
     dataDirs = {
-    "landUseInfo": "../data/MODIS_5s.json", 
+    #"landUseInfo": "../data/MODIS_15s.json", 
+    #"landUseInfo": "../data/MODIS_15s1km.json",
+    "landUseInfo": "../data/MODIS_5s_NLSC2015rpurban1km.json",
     "colorMap": "../data/LU20type.json", 
-    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    #"countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    "countyNumMap": "../data/geo1km.npy",
     }
     taiwanDictBoundary = {
     'initLon': 120,
@@ -172,7 +219,8 @@ if __name__ == "__main__":
     'regionName': "YunLin", 
     }
 
-    luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+    #luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+    luDataLoader = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
     luDataLoader.landUse = luDataLoader.loadData()
     luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
     luDataLoader.cutEdge(taiwanDictBoundary)
@@ -181,6 +229,6 @@ if __name__ == "__main__":
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-    #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=(20, 20))
+    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=(20, 20))
     luDataLoader.getEveryCatRatio()
 
