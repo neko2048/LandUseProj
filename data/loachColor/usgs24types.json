@@ -1,0 +1,21 @@
+{
+     "1": ["#e21417", "urban"],
+     "2": ["#FFB700", "dryland cropland"],
+     "3": ["#EEE8AA", "irrigated cropland"],
+     "4": ["#EEDD82", "mixed dry./irr."],
+     "5": ["#FFF000", "cropland/grassland"],
+     "6": ["#FFE000", "cropland/woodland"],
+     "7": ["#32CD32", "grassland"],
+     "8": ["#6B8D00", "shrubland"],
+     "9": ["#6B8E23", "mixed shr./gra."],
+    "10": ["#90EE90", "savanna"],
+    "11": ["#00552e", "deciduous broadleaf"],
+    "12": ["#006400", "deciduous needleleaf"],
+    "13": ["#007b43", "evergreen broadleaf"],
+    "14": ["#228B22", "evergreen needleleaf"],
+    "15": ["#006e54", "mixed forest"],
+    "16": ["#54aaea", "water bodies"],
+    "17": ["#4682B4", "herbaceous wetland"],
+    "18": ["#4677B4", "wooden wetland"],
+    "19": ["#B8860B", "barren/sparsely veg."]
+}

@@ -1,6 +1,6 @@
 {
-    "landUseName": "MODIS_5s", 
-    "folderDir": "/data1/twsand/fskao/LandUseProj/data/MODIS_5s/",
+    "landUseName": "MODIS_5s_NLSC2015",
+    "folderDir": "/data1/twsand/fskao/LandUseProj/data/MODIS_5s_NLSC2015/",
     "baseLon":   0.00069444,
     "baseLat": -89.99930556,
     "dx": 0.00138889,
@@ -9,4 +9,4 @@
     "tiley": 7200,
     "numType": 20,
     "waterIdx": 17
-    }
+}

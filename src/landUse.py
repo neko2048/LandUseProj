@@ -101,10 +101,10 @@ class LandUseDataLoader:
             idx = int(idx)
             if idx != self.waterIdx:
                 numTarget = np.sum(self.landUse[~np.isnan(self.countyNumMap)] == idx)
-                print("{:30s}: {} %".format(info[1], numTarget / numTotal*100))
+                print("{:30s}: {:.2f} %".format(info[1], numTarget / numTotal*100))
             elif idx == self.waterIdx and hasattr(self, "countyNumMap"):
                 numTarget = np.sum(np.logical_and((1 - np.isnan(self.countyNumMap)), self.landUse == idx))
-                print("{:30s}: {}".format(info[1], numTarget / numTotal*100))
+                print("{:30s}: {:.2f} %".format(info[1], numTarget / numTotal*100))
             else:
                 print("{:30s}: {}".format(info[1], "Not be counted"))
         return None
@@ -124,7 +124,9 @@ class LandUseDataLoader:
         lat = self.lat[latLimit]
         landUse = self.landUse[latLimit][:, lonLimit]
         #landUse = np.full(fill_value=17, shape=landUse.shape)
-        fig = subplots(1, 1, figsize=(figsize or None))
+        dlon = regionBound["endLon"] - regionBound["initLon"]
+        dlat = regionBound["endLat"] - regionBound["initLat"]
+        fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
         pcolormesh(lon, lat, landUse, 
         vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
@@ -136,9 +138,12 @@ class LandUseDataLoader:
                  [labelBound["initLat"], labelBound["initLat"], labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
                  color='red', linewidth=10)
         if hasattr(self, "countyNumMap"):
-            countyNumMap = self.countyNumMap[latLimit][:, lonLimit]
-            contour(lon, lat, ~np.isnan(countyNumMap), colors='black')
-            contour(lon, lat, countyNumMap, colors='black')
+            countyNumMap = self.countyNumMap
+            uniqueCountNum = np.unique(self.countyNumMap)
+            uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+            contour(self.lon, self.lat, ~np.isnan(countyNumMap), colors='black')
+            for i in uniqueCountNum:
+                contour(self.lon, self.lat, countyNumMap==i, colors='black')
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
@@ -171,7 +176,9 @@ class GeoDataLoader(LandUseDataLoader):
         lat = self.lat
         landUse = self.landUse
         #landUse = np.full(fill_value=17, shape=landUse.shape)
-        fig = subplots(1, 1, figsize=(figsize or None))
+        dlon = regionBound["endLon"] - regionBound["initLon"]
+        dlat = regionBound["endLat"] - regionBound["initLat"]
+        fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
         pcolormesh(lon, lat, landUse, 
         vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
@@ -184,8 +191,11 @@ class GeoDataLoader(LandUseDataLoader):
                  color='red', linewidth=10)
         if hasattr(self, "countyNumMap"):
             countyNumMap = self.countyNumMap
+            uniqueCountNum = np.unique(self.countyNumMap)
+            uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
             contour(lon, lat, ~np.isnan(countyNumMap), colors='black')
-            contour(lon, lat, countyNumMap, colors='black')
+            for i in uniqueCountNum:
+                contour(lon, lat, countyNumMap==i, colors='black')
         xlabel('Longitude', fontsize=30)
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
@@ -197,10 +207,10 @@ class GeoDataLoader(LandUseDataLoader):
 
 if __name__ == "__main__":
     dataDirs = {
-    #"landUseInfo": "../data/MODIS_15s.json", 
-    #"landUseInfo": "../data/MODIS_15s1km.json",
-    "landUseInfo": "../data/MODIS_5s_NLSC2015rpurban1km.json",
-    "colorMap": "../data/LU20type.json", 
+    #"landUseInfo": "../data/MODIS_5s.json", 
+    "landUseInfo": "../data/MODIS_5s_NLSC2015_1km.json",
+    #"landUseInfo": "../data/MODIS_15s.json",
+    "colorMap": "../data/loachColor/modis20types.json", 
     #"countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
     "countyNumMap": "../data/geo1km.npy",
     }
@@ -229,6 +239,7 @@ if __name__ == "__main__":
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=(20, 20))
+    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=None)
     luDataLoader.getEveryCatRatio()
+
 
