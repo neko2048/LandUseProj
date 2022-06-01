@@ -1,0 +1,12 @@
+{
+     "1": ["#429bde", "Water"],
+     "2": ["#3a7d47", "Trees"],
+     "3": ["#88af52", "Grass"],
+     "4": ["#748bc2", "Flooded vegetation"],
+     "5": ["#e3c765", "Crops"],
+     "6": ["#d7be9f", "Scrub/shrub"],
+     "7": ["#d5203f", "Built Area"],
+     "8": ["#a59b8f", "Bare ground"],
+     "9": ["#ffffff", "Snow/Ice"],
+    "10": ["#000000", "Clouds"]
+}

@@ -6,7 +6,7 @@ import tifffile as tiff
 import twd97
 import re
 import json
-class ESRI:
+class ESRIDataLoader:
     def __init__(self, dataInfo):
         self.dataInfo = dataInfo
         self.landUseName = self.dataInfo["landUseName"]
@@ -163,32 +163,33 @@ if __name__ == "__main__":
     'endLat': 25.459580, 
     'regionName': "Taiwan", 
     }
-    yunlinDictBoundary = {
-    'initLon': 120.20,
-    'endLon':  120.70,  
-    'initLat': 23.70,
-    'endLat': 23.9194608, 
-    'regionName': "YunLin", 
+    dataDirs = {
+    #"landUseInfo": "../data/MODIS_5s.json", 
+    #"landUseInfo": "../data/MODIS_15s1km.json",
+    #"landUseInfo": "../data/MODIS_5s_NLSC2015.json",
+    "landUseInfo": "../data/NLSC2015Nearest1km.json",
+    #"landUseInfo": "../data/MODIS_15s.json",
+    "colorMap": "../data/loachColor/modis20types.json", 
+    #"countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    "countyNumMap": "../data/geo1km.npy",
     }
     with open("../data/ESRI_10m.json") as jsonFile:
         ESRI_10mInfo = json.load(jsonFile) # not test yet
     # landUse type: https://www.arcgis.com/home/item.html?id=d6642f8a4f6d4685a24ae2dc0c73d4ac
 
 
-    
-
-    esri = ESRI(dataInfo = ESRI_10mInfo)
+    esri = ESRIDataLoader(dataInfo = ESRI_10mInfo)
     # >>>>> draw Taiwan >>>>>
-    #esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
+    esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
     #esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
     #esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
     #esri.drawRegion(regionBound=taiwanDictBoundary, localDictBoundary=None)
     #print(esri.getTaiwanUrbanRatio())
     #esri.getTaiwanEachCateRatio()
     # >>>>> draw YunLin >>>>>
-    esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
-    esri.cutEdge(yunlinDictBoundary)
-    esri.drawYunLin()
+    #esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
+    #esri.cutEdge(yunlinDictBoundary)
+    #esri.drawYunLin()
     #print(esri.getUrbanRatio())
     
     

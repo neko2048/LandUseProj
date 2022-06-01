@@ -2,7 +2,7 @@ import numpy as np
 import json
 from countyJudge import CountyJudger
 from landUse import LandUseDataLoader, GeoDataLoader
-
+from landUseESRI import ESRIDataLoader
 if __name__ == "__main__":
     dataDirs = {
     "landUseInfo": "../data/MODIS_5s_NLSC2015rpurban1km.json",
@@ -35,6 +35,7 @@ if __name__ == "__main__":
                 if i % 100 == 0 and j % 100 ==0:
                     print("{:04d}/{}, {:04d}/{}: {}".format(i, len(luDataLoader.lon), j, len(luDataLoader.lat), countyNumIdx))
                 countyNumMap[j, i] = countyNumIdx
+
     elif len(luDataLoader.lon.shape) == 2:
         print(luDataLoader.lon.shape)
         for i in range(luDataLoader.lon.shape[0]):
