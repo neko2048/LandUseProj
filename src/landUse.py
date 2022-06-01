@@ -168,6 +168,25 @@ class GeoDataLoader(LandUseDataLoader):
         lonBound = np.logical_and(self.lon >= dictBoundary['initLon'], self.lon <= dictBoundary['endLon'])
         bound = np.logical_and(latBound, lonBound)
         self.landUse = self.landUse * bound
+        if hasattr(self, "countyNumMap"):
+            self.countyNumMap = np.ma.masked_array(self.countyNumMap, 1 - bound)
+
+    def getEveryCatRatio(self):
+        if hasattr(self, "countyNumMap"):
+            numTotal = np.sum(1 - np.isnan(self.countyNumMap))
+        else:
+            numTotal = np.sum(np.logical_and(self.landUse != self.waterIdx, self.landUse != 0))
+        for idx, info in self.colorMap.items():
+            idx = int(idx)
+            if idx != self.waterIdx:
+                numTarget = np.sum(self.landUse[~np.isnan(self.countyNumMap)] == idx)
+                print("{:30s}: {:.2f} %".format(info[1], numTarget / numTotal*100))
+            elif idx == self.waterIdx and hasattr(self, "countyNumMap"):
+                numTarget = np.sum(np.logical_and((1 - np.isnan(self.countyNumMap)), self.landUse == idx))
+                print("{:30s}: {:.2f} %".format(info[1], numTarget / numTotal*100))
+            else:
+                print("{:30s}: {}".format(info[1], "Not be counted"))
+        return None
 
     def drawRegion(self, regionBound, labelBound=None, figsize=None):
         cmap = ListedColormap([x[0] for x in self.colorMap.values()])
@@ -208,7 +227,9 @@ class GeoDataLoader(LandUseDataLoader):
 if __name__ == "__main__":
     dataDirs = {
     #"landUseInfo": "../data/MODIS_5s.json", 
-    "landUseInfo": "../data/MODIS_5s_NLSC2015_1km.json",
+    #"landUseInfo": "../data/MODIS_15s1km.json",
+    #"landUseInfo": "../data/MODIS_5s_NLSC2015.json",
+    "landUseInfo": "../data/NLSC2015Nearest1km.json",
     #"landUseInfo": "../data/MODIS_15s.json",
     "colorMap": "../data/loachColor/modis20types.json", 
     #"countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
@@ -228,18 +249,27 @@ if __name__ == "__main__":
     'endLat': 23.9194608, 
     'regionName': "YunLin", 
     }
-
+    taipeiDictBoundary = {
+    'initLon': 121.0,
+    'endLon':  121.8,
+    'initLat': 24.8,
+    'endLat': 25.3,
+    'figratio':36,
+    'regionName':"Taipei"
+    }
     #luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
     luDataLoader = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
     luDataLoader.landUse = luDataLoader.loadData()
     luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
-    luDataLoader.cutEdge(taiwanDictBoundary)
+    #luDataLoader.cutEdge(taiwanDictBoundary)
+    #luDataLoader.cutEdge(yunlinDictBoundary)
     #print(luDataLoader.getCatRatio(catName="urban"))
     #print(luDataLoader.getPlaceLandType(lon=120.8, lat=23.666666))
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-    luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=None)
-    luDataLoader.getEveryCatRatio()
+    #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=None)
+    luDataLoader.drawRegion(regionBound=taipeiDictBoundary, figsize=None)
+    #luDataLoader.getEveryCatRatio()
 
 

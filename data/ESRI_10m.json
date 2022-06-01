@@ -1,13 +1,13 @@
 {
     "landUseName": "ESRI_10m", 
-    "southFileDir": "../ESRI/51Q100_lonlat.tif",
+    "southFileDir": "../data/ESRI/51Q100_lonlat.tif",
     "southBound": {
         "initLon": 119.185517,
         "endLon" : 124.36715,
         "initLat": 15.234567,
         "endLat" : 24.435789
     },
-    "northFileDir": "../ESRI/51R100_lonlat.tif",
+    "northFileDir": "../data/ESRI/51R100_lonlat.tif",
     "northBound": {
         "initLon": 118.598375,
         "endLon" : 127.363256,

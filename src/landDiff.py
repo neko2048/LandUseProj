@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib.pyplot import *
-from landUse import *
+from test import *
 from matplotlib.colors import ListedColormap
 from matplotlib import colors as c
 
@@ -51,8 +51,11 @@ class DiffSys:
     def drawTaiwanDiff(self, baseSys, compareSys):
         cmap = ListedColormap([x[0] for x in compareSys.colorMap.values()])
         cmapTick = [x[1] for x in compareSys.colorMap.values()]
+        dlon = taiwanDictBoundary["endLon"] - taiwanDictBoundary["initLon"]
+        dlat = taiwanDictBoundary["endLat"] - taiwanDictBoundary["initLat"]
+        fig = subplots(1, 1, figsize=(dlon/dlat*20, 20))
         #cmap = np.vstack((cmap, np.full_like(shape=np.)))
-        fig = subplots(1, 1, figsize=(16, 16))
+        #fig = subplots(1, 1, figsize=(16, 16))
         pcolormesh(compareSys.lon, compareSys.lat, compareSys.landUse, 
         vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
         #cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
@@ -74,7 +77,9 @@ class DiffSys:
     def drawTaiwanDiffForESRI(self, baseSys, compareSys=esri):
         cmap = ListedColormap([x[0] for x in compareSys.colorMap.values()])
         cmapTick = [x[1] for x in compareSys.colorMap.values()]
-        fig = subplots(1, 1, figsize=(16, 16))
+        dlon = taiwanDictBoundary["endLon"] - taiwanDictBoundary["initLon"]
+        dlat = taiwanDictBoundary["endLat"] - taiwanDictBoundary["initLat"]
+        fig = subplots(1, 1, figsize=(dlon/dlat*20, 20))
         pcolormesh(compareSys.sLon, compareSys.sLat, compareSys.southLandUse, 
         vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
         pcolormesh(compareSys.nLon, compareSys.nLat, compareSys.northLandUse, 

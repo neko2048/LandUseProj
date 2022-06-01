@@ -118,25 +118,32 @@ class ESRI:
         cmapTick = [x[1] for x in self.colorMap.values()]
         fig = subplots(1, 1, figsize=(16, 7))
         pcolormesh(self.lon, self.lat, self.landUse, 
-        vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+		vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         cb.set_ticklabels(cmapTick)
-        xlim(yunInitLon, yunEndLon)
-        ylim(yunInitLat, yunEndLat)
+        xlim(yunlinDictBoundary["initLon"], yunlinDictBoundary["endLon"])
+        ylim(yunlinDictBoundary["initLat"], yunlinDictBoundary["endLat"])
         title('{} LandUse'.format(self.landUseName))
         savefig("{}_yunlin.jpg".format(self.landUseName), dpi=300)
 
-    def drawTaiwan(self, localDictBoundary=None):
+    def drawRegion(self, regionBound, localDictBoundary=None, figsize=None):
+        dlon = regionBound["endLon"] - regionBound["initLon"]
+        dlat = regionBound["endLat"] - regionBound["initLat"]
+        
         cmap = ListedColormap([x[0] for x in self.colorMap.values()])
         cmapTick = [x[1] for x in self.colorMap.values()]
-        fig = subplots(1, 1, figsize=(16, 16))
+        fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
         pcolormesh(self.nLon, self.nLat, self.northLandUse, 
-        vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         cb.set_ticklabels(cmapTick)
         cb.ax.tick_params(labelsize=17)
         pcolormesh(self.sLon, self.sLat, self.southLandUse, 
-        vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
+        
         if localDictBoundary:
             plot([localDictBoundary["initLon"], localDictBoundary["endLon"], localDictBoundary["endLon"], localDictBoundary["initLon"], localDictBoundary["initLon"]], 
                  [localDictBoundary["initLat"], localDictBoundary["initLat"], localDictBoundary["endLat"], localDictBoundary["endLat"], localDictBoundary["initLat"]], 
@@ -157,9 +164,9 @@ if __name__ == "__main__":
     'regionName': "Taiwan", 
     }
     yunlinDictBoundary = {
-    'initLon': 120.01,
-    'endLon':  121.00,  
-    'initLat': 23.4853847,
+    'initLon': 120.20,
+    'endLon':  120.70,  
+    'initLat': 23.70,
     'endLat': 23.9194608, 
     'regionName': "YunLin", 
     }
@@ -170,18 +177,18 @@ if __name__ == "__main__":
 
     
 
-    #esri = ESRI(dataInfo = ESRI_10mInfo)
+    esri = ESRI(dataInfo = ESRI_10mInfo)
     # >>>>> draw Taiwan >>>>>
     #esri.nLon, esri.nLat, esri.northLandUse = esri.getPartLandUse(type="north")
     #esri.sLon, esri.sLat, esri.southLandUse = esri.getPartLandUse(type="south")
     #esri.lon, esri.lat, esri.landUse = esri.getPartLandUse(type="south")
-    #esri.drawTaiwan(localDictBoundary=None)
+    #esri.drawRegion(regionBound=taiwanDictBoundary, localDictBoundary=None)
     #print(esri.getTaiwanUrbanRatio())
     #esri.getTaiwanEachCateRatio()
     # >>>>> draw YunLin >>>>>
-    #esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
-    #esri.cutEdge(yunlinDictBoundary)
-    #esri.drawYunLin()
+    esri.lon, esri.lat  = esri.getLonLat(dictBoundary=ESRI_10mInfo["southBound"])
+    esri.cutEdge(yunlinDictBoundary)
+    esri.drawYunLin()
     #print(esri.getUrbanRatio())
     
     
