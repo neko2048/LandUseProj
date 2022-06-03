@@ -30,8 +30,8 @@ if __name__ == "__main__":
     #luDataLoader = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
 
     # >>>>> ESRIDataLoader Use >>>>>
-    luDataLoader = ESRIDataLoader(dataDirs = dataDirs, hemiType="north")
-    #luDataLoader = ESRIDataLoader(dataDirs = dataDirs, hemiType="south")
+    #luDataLoader = ESRIDataLoader(dataDirs = dataDirs, hemiType="north")
+    luDataLoader = ESRIDataLoader(dataDirs = dataDirs, hemiType="south")
     
     luDataLoader.landUse = luDataLoader.loadData()
     luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
@@ -60,5 +60,5 @@ if __name__ == "__main__":
                     print("{:04d}/{}, {:04d}/{}: {}".format(i, luDataLoader.lon.shape[0], j, luDataLoader.lon.shape[1], countyNumIdx))
                 countyNumMap[i, j] = countyNumIdx
     print(countyNumMap.shape)
-    np.save("../data/{}North_countyNumMap.npy".format(luDataLoader.landUseName), countyNumMap)
+    np.save("../data/{}South_countyNumMap.npy".format(luDataLoader.landUseName), countyNumMap)
 
