@@ -3,7 +3,7 @@ from matplotlib.pyplot import *
 from test import *
 from matplotlib.colors import ListedColormap
 from matplotlib import colors as c
-
+from landUse import LandUseDataLoader
 class DiffSys:
     def __init__(self, data1, data2):
         self.data1 = data1
@@ -31,6 +31,18 @@ class DiffSys:
                     diff[i, j] = 1
         return diff
 
+    def getDrawCountyNumMap(self, dictBoundary):
+        dataDirs = {
+        "landUseInfo": "../data/MODIS_5s.json", 
+        "colorMap": "../data/loachColor/modis20types.json", 
+        "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+        }
+        luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+        luDataLoader.landUse = luDataLoader.loadData()
+        luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
+        luDataLoader.cutEdge(dictBoundary)
+        return luDataLoader.lon, luDataLoader.lat, luDataLoader.countyNumMap
+
     def drawYunlinDiff(self, baseSys, compareSys):
         cmap = ListedColormap([x[0] for x in compareSys.colorMap.values()])
         cmapTick = [x[1] for x in compareSys.colorMap.values()]
@@ -56,8 +68,8 @@ class DiffSys:
         fig = subplots(1, 1, figsize=(dlon/dlat*20, 20))
         #cmap = np.vstack((cmap, np.full_like(shape=np.)))
         #fig = subplots(1, 1, figsize=(16, 16))
-        pcolormesh(compareSys.lon, compareSys.lat, compareSys.landUse, 
-        vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
+        #pcolormesh(compareSys.lon, compareSys.lat, compareSys.landUse, 
+        #vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
         #cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         #cb.set_ticklabels(cmapTick)
         #cb.ax.tick_params(labelsize=25)
@@ -66,6 +78,12 @@ class DiffSys:
         pcolormesh(compareSys.lon, compareSys.lat, np.ma.masked_array(diff, diff != 1), cmap=c.ListedColormap(['red']))
         pcolormesh(compareSys.lon, compareSys.lat, np.ma.masked_array(diff, diff != 2), cmap=c.ListedColormap(['blue']))
         pcolormesh(compareSys.lon, compareSys.lat, np.ma.masked_array(diff, diff != 3), cmap=c.ListedColormap(['black']))
+        dLon, dLat, dCountyNumMap = self.getDrawCountyNumMap(taiwanDictBoundary)
+        uniqueCountNum = np.unique(dCountyNumMap)
+        uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+        contour(dLon, dLat, ~np.isnan(dCountyNumMap), colors='black')
+        for i in uniqueCountNum:
+            contour(dLon, dLat, dCountyNumMap==i, colors='black')
         title("Difference of Urban based on {}\n{}: (RED) | {} (BLUE) | COMMON (BLACK) ".\
               format(compareSys.landUseName, compareSys.landUseName, baseSys.landUseName), fontsize=30)
         xlabel('Longitude', fontsize=30)
@@ -80,10 +98,10 @@ class DiffSys:
         dlon = taiwanDictBoundary["endLon"] - taiwanDictBoundary["initLon"]
         dlat = taiwanDictBoundary["endLat"] - taiwanDictBoundary["initLat"]
         fig = subplots(1, 1, figsize=(dlon/dlat*20, 20))
-        pcolormesh(compareSys.sLon, compareSys.sLat, compareSys.southLandUse, 
-        vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
-        pcolormesh(compareSys.nLon, compareSys.nLat, compareSys.northLandUse, 
-        vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
+        #pcolormesh(compareSys.sLon, compareSys.sLat, compareSys.southLandUse, 
+        #vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
+        #pcolormesh(compareSys.nLon, compareSys.nLat, compareSys.northLandUse, 
+        #vmin=np.min(list(compareSys.colorMap.keys()))-0.5, vmax=np.max(list(compareSys.colorMap.keys()))+0.5, cmap=cmap)
 
         # calculate north part
         baseSys.isNorthUrban = self.getIsUrban(baseSys.northLandUse, baseSys.getUrbanIndex())
@@ -100,7 +118,12 @@ class DiffSys:
         pcolormesh(compareSys.sLon, compareSys.sLat, np.ma.masked_array(southDiff, southDiff != 1), cmap=c.ListedColormap(['red']))
         pcolormesh(compareSys.sLon, compareSys.sLat, np.ma.masked_array(southDiff, southDiff != 2), cmap=c.ListedColormap(['blue']))
         pcolormesh(compareSys.sLon, compareSys.sLat, np.ma.masked_array(southDiff, southDiff != 3), cmap=c.ListedColormap(['black']))
-
+        dLon, dLat, dCountyNumMap = self.getDrawCountyNumMap(taiwanDictBoundary)
+        uniqueCountNum = np.unique(dCountyNumMap)
+        uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+        contour(dLon, dLat, ~np.isnan(dCountyNumMap), colors='black')
+        for i in uniqueCountNum:
+            contour(dLon, dLat, dCountyNumMap==i, colors='black')
         title("Difference of Urban based on {}\n{}: (RED) | {} (BLUE) | COMMON (BLACK) ".\
               format(compareSys.landUseName, compareSys.landUseName, baseSys.landUseName), fontsize=30)
         xlabel('Longitude', fontsize=30)
@@ -120,7 +143,10 @@ if __name__ == "__main__":
         lon = lon[lonLimit]
         lat = lat[latLimit]
         return lon, lat, landUse
-
+    countyNumMapInfo = {
+    "landUseInfo": "../data/MODIS_5s.json", 
+    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    }
     # USGS, Modis
     UMcompare = DiffSys(usgs, modis)
     #UMcompare.drawYunlinDiff(baseSys=usgs, compareSys=modis)

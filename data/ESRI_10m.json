@@ -13,6 +13,7 @@
         "endLon" : 127.363256,
         "initLat": 23.300906,
         "endLat" : 32.572875
-    }
-    
+    },
+    "numType": 10,
+    "waterIdx": 1
 }

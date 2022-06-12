@@ -227,13 +227,13 @@ class GeoDataLoader(LandUseDataLoader):
 if __name__ == "__main__":
     dataDirs = {
     #"landUseInfo": "../data/MODIS_5s.json", 
-    #"landUseInfo": "../data/MODIS_15s1km.json",
-    #"landUseInfo": "../data/MODIS_5s_NLSC2015.json",
-    "landUseInfo": "../data/NLSC2015Nearest1km.json",
+    #"landUseInfo": "../data/MODIS_15s.json",
+    "landUseInfo": "../data/MODIS_5s_NLSC2015.json",
+    #"landUseInfo": "../data/NLSC2015Nearest1km.json",
     #"landUseInfo": "../data/MODIS_15s.json",
     "colorMap": "../data/loachColor/modis20types.json", 
-    #"countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
-    "countyNumMap": "../data/geo1km.npy",
+    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    #"countyNumMap": "../data/geo1km.npy",
     }
     taiwanDictBoundary = {
     'initLon': 120,
@@ -257,11 +257,11 @@ if __name__ == "__main__":
     'figratio':36,
     'regionName':"Taipei"
     }
-    #luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
-    luDataLoader = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+    luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+    #luDataLoader = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
     luDataLoader.landUse = luDataLoader.loadData()
     luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
-    #luDataLoader.cutEdge(taiwanDictBoundary)
+    luDataLoader.cutEdge(taiwanDictBoundary)
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #print(luDataLoader.getCatRatio(catName="urban"))
     #print(luDataLoader.getPlaceLandType(lon=120.8, lat=23.666666))
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=None)
-    luDataLoader.drawRegion(regionBound=taipeiDictBoundary, figsize=None)
-    #luDataLoader.getEveryCatRatio()
+    #luDataLoader.drawRegion(regionBound=taipeiDictBoundary, figsize=None)
+    luDataLoader.getEveryCatRatio()
 
 

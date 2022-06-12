@@ -1,18 +1,18 @@
 import numpy as np
 from matplotlib.pyplot import *
-import re
 from matplotlib.colors import ListedColormap
 import tifffile as tiff
-import twd97
-import re
 import json
+from landUse import LandUseDataLoader
+
+
 class ESRIDataLoader:
     def __init__(self, dataDirs, hemiType):
         self.dataDirs = dataDirs
         self.hemiType = hemiType
-        self.dataInfo = self.getJSON("landUseInfo")
         self.landUseInfo = self.dataDirs["landUseInfo"]
-        self.colorMap = self.dataDirs["colorMap"]
+        self.dataInfo = self.getJSON("landUseInfo")
+        self.colorMap = self.getJSON("colorMap")
         self.landUseName = self.dataInfo["landUseName"]
         self.cutEdgeLat = 23.5
         if "countyNumMap" in self.dataDirs.keys():
@@ -56,105 +56,74 @@ class MergeSys():
     def __init__(self, nEsri, sEsri):
         self.nEsri = nEsri
         self.sEsri = sEsri
+        self.nLon, self.nLat = self.nEsri.lon, self.nEsri.lat
+        self.sLon, self.sLat = self.sEsri.lon, self.sEsri.lat
+        self.nLandUse, self.sLandUse = self.nEsri.landUse, self.sEsri.landUse
+        self.colorMap = self.nEsri.colorMap
+        self.nCountyNumMap = self.nEsri.countyNumMap
+        self.sCountyNumMap = self.sEsri.countyNumMap
+        self.landUseName = "ESRI_10m"
 
+    def getEveryCatRatio(self):
+        waterIndex = self.nEsri.dataInfo["waterIdx"]
+        numNorthTotal = np.sum(~np.isnan(self.nEsri.countyNumMap))
+        numSouthTotal = np.sum(~np.isnan(self.sEsri.countyNumMap))
 
-    #def getUrbanIndex(self):
-    #    urbanIndex = 0
-    #    for idx, info in self.colorMap.items():
-    #        if "Built" in info[1]:
-    #            urbanIndex = idx
-    #            break
-    #    return urbanIndex
+        for idx, info in self.colorMap.items():
+            targetIndex = int(idx)
+            numNorthTarget = np.sum(self.nLandUse[~np.isnan(self.nEsri.countyNumMap)] == targetIndex)
+            numSouthTarget = np.sum(self.sLandUse[~np.isnan(self.sEsri.countyNumMap)] == targetIndex)
+            totalNorthArea = (np.max(self.nLat) - np.min(self.nLat)) #/ (np.max(self.nLat) - np.min(self.sLat))
+            totalSouthArea = (np.max(self.sLat) - np.min(self.sLat)) #/ (np.max(self.nLat) - np.min(self.sLat))
+            gridNorthArea, gridSouthArea = totalNorthArea / numNorthTotal, totalSouthArea / numSouthTotal
+            ratioUp = numNorthTarget * gridNorthArea + numSouthTarget * gridSouthArea
+            ratioDown = numNorthTotal * gridNorthArea + numSouthTotal * gridSouthArea
+            print("{:30s}: {:.2f} %".format(info[1], ratioUp / ratioDown * 100))
 
-    #def getWaterIndex(self):
-    #    waterIndex = 0
-    #    for idx, info in self.colorMap.items():
-    #        if "ater" in info[1]:
-    #            waterIndex = idx
-    #            break
-    #    return waterIndex
+    def getDrawCountyNumMap(self, dictBoundary):
+        dataDirs = {
+        "landUseInfo": "../data/MODIS_5s.json", 
+        "colorMap": "../data/loachColor/modis20types.json", 
+        "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+        }
+        luDataLoader = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs)
+        luDataLoader.landUse = luDataLoader.loadData()
+        luDataLoader.lon, luDataLoader.lat = luDataLoader.getLonLat()
+        luDataLoader.cutEdge(dictBoundary)
+        return luDataLoader.lon, luDataLoader.lat, luDataLoader.countyNumMap
 
-    #def getUrbanRatio(self):
-    #    urbanIndex = self.getUrbanIndex()
-    #    waterIndex = self.getWaterIndex()
-    #    numUrban = np.sum(self.landUse == urbanIndex)
-    #    numTotal = np.sum(self.landUse != waterIndex)
-    #    return numUrban / numTotal
+    def drawRegion(self, regionBound, localDictBoundary=None, figsize=None, countyDictBoundary=None):
+        dlon = regionBound["endLon"] - regionBound["initLon"]
+        dlat = regionBound["endLat"] - regionBound["initLat"]
+        cmap = ListedColormap([x[0] for x in self.colorMap.values()])
+        cmapTick = [x[1] for x in self.colorMap.values()]
+        fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
+        pcolormesh(self.nLon, self.nLat, self.nLandUse, 
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
+        cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
+        cb.set_ticklabels(cmapTick)
+        cb.ax.tick_params(labelsize=17)
+        pcolormesh(self.sLon, self.sLat, self.sLandUse, 
+        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
 
-    #def getTaiwanUrbanRatio(self):
-    #    urbanIndex = self.getUrbanIndex()
-    #    waterIndex = self.getWaterIndex()
-    #    numNorthUrban = np.sum(self.northLandUse == urbanIndex)
-    #    numSouthUrban = np.sum(self.southLandUse == urbanIndex)
-    #    numNorthNonWater = np.sum(np.logical_and(self.northLandUse != waterIndex, self.northLandUse != 0))
-    #    numsouthNonWater = np.sum(np.logical_and(self.southLandUse != waterIndex, self.southLandUse != 0))
-    #    numNorthTotal = self.northLandUse.shape[0] * self.northLandUse.shape[1]
-    #    numSouthTotal = self.southLandUse.shape[0] * self.southLandUse.shape[1]
-    #    totalNorthArea = (np.max(self.nLat) - np.min(self.nLat)) / (np.max(self.nLat) - np.min(self.sLat))
-    #    totalSouthArea = (np.max(self.sLat) - np.min(self.sLat)) / (np.max(self.nLat) - np.min(self.sLat))
-    #    gridNorthArea, gridSouthArea = totalNorthArea / numNorthTotal, totalSouthArea / numSouthTotal
-    #    return (numNorthUrban * gridNorthArea + numSouthUrban * gridSouthArea) / (numNorthNonWater * gridNorthArea + numsouthNonWater * gridSouthArea)
+        if localDictBoundary:
+            plot([localDictBoundary["initLon"], localDictBoundary["endLon"], localDictBoundary["endLon"], localDictBoundary["initLon"], localDictBoundary["initLon"]], 
+                 [localDictBoundary["initLat"], localDictBoundary["initLat"], localDictBoundary["endLat"], localDictBoundary["endLat"], localDictBoundary["initLat"]], 
+                 color='red', linewidth=10)
+        if countyDictBoundary:
+            dLon, dLat, dCountyNumMap = self.getDrawCountyNumMap(countyDictBoundary)
+            uniqueCountNum = np.unique(dCountyNumMap)
+            uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+            contour(dLon, dLat, ~np.isnan(dCountyNumMap), colors='black')
+            for i in uniqueCountNum:
+                contour(dLon, dLat, dCountyNumMap==i, colors='black')
+        title('{} LandUse'.format(self.landUseName), fontsize=30)
+        xlabel('Longitude', fontsize=30)
+        ylabel('Latitude', fontsize=30)
+        xticks(fontsize=30)
+        yticks(fontsize=30)
+        savefig("{}_Taiwan.jpg".format(self.landUseName), dpi=600)
 
-    #def getTaiwanEachCateRatio(self):
-    #    waterIndex = self.getWaterIndex()
-    #    numNorthTotal = self.northLandUse.shape[0] * self.northLandUse.shape[1]
-    #    numSouthTotal = self.southLandUse.shape[0] * self.southLandUse.shape[1]
-    #    numNorthNonWater = np.sum(np.logical_and(self.northLandUse != waterIndex, self.northLandUse != 0))
-    #    numsouthNonWater = np.sum(np.logical_and(self.southLandUse != waterIndex, self.southLandUse != 0))
-
-    #    for idx, info in self.colorMap.items():
-    #        targetIndex = idx
-    #        numNorthTarget = np.sum(self.northLandUse == targetIndex)
-    #        numSouthTarget = np.sum(self.southLandUse == targetIndex)
-    #        totalNorthArea = (np.max(self.nLat) - np.min(self.nLat)) / (np.max(self.nLat) - np.min(self.sLat))
-    #        totalSouthArea = (np.max(self.sLat) - np.min(self.sLat)) / (np.max(self.nLat) - np.min(self.sLat))
-    #        gridNorthArea, gridSouthArea = totalNorthArea / numNorthTotal, totalSouthArea / numSouthTotal
-    #        ratioUp = numNorthTarget * gridNorthArea + numSouthTarget * gridSouthArea
-    #        ratioDown = numNorthNonWater * gridNorthArea + numsouthNonWater * gridSouthArea
-    #        print(info, ratioUp / ratioDown * 100)
-
-
-    #def drawYunLin(self):
-    #    cmap = ListedColormap([x[0] for x in self.colorMap.values()])
-    #    cmapTick = [x[1] for x in self.colorMap.values()]
-    #    fig = subplots(1, 1, figsize=(16, 7))
-    #    pcolormesh(self.lon, self.lat, self.landUse, 
-    #    #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
-    #    vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
-    #    cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
-    #    cb.set_ticklabels(cmapTick)
-    #    xlim(yunlinDictBoundary["initLon"], yunlinDictBoundary["endLon"])
-    #    ylim(yunlinDictBoundary["initLat"], yunlinDictBoundary["endLat"])
-    #    title('{} LandUse'.format(self.landUseName))
-    #    savefig("{}_yunlin.jpg".format(self.landUseName), dpi=300)
-
-    #def drawRegion(self, regionBound, localDictBoundary=None, figsize=None):
-    #    dlon = regionBound["endLon"] - regionBound["initLon"]
-    #    dlat = regionBound["endLat"] - regionBound["initLat"]
-    #    
-    #    cmap = ListedColormap([x[0] for x in self.colorMap.values()])
-    #    cmapTick = [x[1] for x in self.colorMap.values()]
-    #    fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
-    #    pcolormesh(self.nLon, self.nLat, self.northLandUse, 
-    #    #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
-    #    vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
-    #    cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
-    #    cb.set_ticklabels(cmapTick)
-    #    cb.ax.tick_params(labelsize=17)
-    #    pcolormesh(self.sLon, self.sLat, self.southLandUse, 
-    #    #vmin=np.min(list(self.colorMap.keys()))-0.5, vmax=np.max(list(self.colorMap.keys()))+0.5, cmap=cmap)
-    #    vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
-    #    
-    #    if localDictBoundary:
-    #        plot([localDictBoundary["initLon"], localDictBoundary["endLon"], localDictBoundary["endLon"], localDictBoundary["initLon"], localDictBoundary["initLon"]], 
-    #             [localDictBoundary["initLat"], localDictBoundary["initLat"], localDictBoundary["endLat"], localDictBoundary["endLat"], localDictBoundary["initLat"]], 
-    #             color='red', linewidth=10)
-    #    title('{} LandUse'.format(self.landUseName), fontsize=30)
-    #    xlabel('Longitude', fontsize=30)
-    #    ylabel('Latitude', fontsize=30)
-    #    xticks(fontsize=30)
-    #    yticks(fontsize=30)
-    #    savefig("{}_Taiwan.jpg".format(self.landUseName), dpi=600)
 
 if __name__ == "__main__":
     taiwanDictBoundary = {
@@ -166,30 +135,32 @@ if __name__ == "__main__":
     }
     northDataDirs = {
     "landUseInfo": "../data/ESRI_10m.json", 
-    "colorMap": "../data/LU10types.json", 
+    "colorMap": "../data/LU10type.json", 
     "countyNumMap": "../data/ESRI_10mNorth_countyNumMap.npy",
     }
     southDataDirs = {
     "landUseInfo": "../data/ESRI_10m.json", 
-    "colorMap": "../data/LU10types.json", 
+    "colorMap": "../data/LU10type.json", 
     "countyNumMap": "../data/ESRI_10mSouth_countyNumMap.npy",
     }
-
+    countyNumMapInfo = {
+    "landUseInfo": "../data/MODIS_5s.json", 
+    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    }
 
     nEsri = ESRIDataLoader(dataDirs = northDataDirs, hemiType="north")
     nEsri.landUse = nEsri.loadData()
     nEsri.lon, nEsri.lat = nEsri.getLonLat()
     nEsri.cutEdge(dictBoundary=taiwanDictBoundary)
-    print(nEsri.countyNumMap.shape)
 
     sEsri = ESRIDataLoader(dataDirs = southDataDirs, hemiType="south")
     sEsri.landUse = sEsri.loadData()
     sEsri.lon, sEsri.lat = sEsri.getLonLat()
     sEsri.cutEdge(dictBoundary=taiwanDictBoundary)
-    print(sEsri.countyNumMap.shape)
     
-    mergeSys = MergeSys(nEsri, nEsri)
-
+    mergeSys = MergeSys(nEsri, sEsri)
+    mergeSys.drawRegion(regionBound=taiwanDictBoundary, countyDictBoundary=taiwanDictBoundary)
+    mergeSys.getEveryCatRatio()
     # >>>>> draw Taiwan >>>>>
     #esri.nLon, esri.nLat, esri.northLandUse = esri.getHemiLandUse(type="north")
     #esri.sLon, esri.sLat, esri.southLandUse = esri.getHemiLandUse(type="south")
