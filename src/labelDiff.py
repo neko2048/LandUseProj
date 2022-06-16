@@ -132,15 +132,18 @@ class DiffSys():
 
 if __name__ == "__main__":
     dataDirs2 = {
-    "landUseInfo": "../data/MODIS_5s1km.json", 
+    #"landUseInfo": "../data/MODIS_5s1km.json", 
+    "landUseInfo": "../data/MODIS_5s.json", 
     "colorMap": "../data/loachColor/modis20types.json", 
-    "countyNumMap": "../data/geo1km.npy",
+    #"countyNumMap": "../data/geo1km.npy",
+    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
     }
 
     dataDirs1 = {
-    "landUseInfo": "../data/MODIS_5s_NLSC2015_1km.json", 
+    #"landUseInfo": "../data/MODIS_5s_NLSC2015_1km.json", 
+    "landUseInfo": "../data/MODIS_5s_NLSC2015.json", 
     "colorMap": "../data/loachColor/modis20types.json", 
-    "countyNumMap": "../data/geo1km.npy",
+    "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
     }
 
     taiwanDictBoundary = {
@@ -150,22 +153,30 @@ if __name__ == "__main__":
     'endLat': 25.459580, 
     'regionName': "Taiwan", 
     }
-
-    luDataLoader1 = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs1)
+    yunlinDictBoundary = {
+    'initLon': 120.01,
+    'endLon':  121.00,  
+    'initLat': 23.4853847,
+    'endLat': 23.9194608, 
+    'regionName': "YunLin", 
+    }
+    luDataLoader1 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs1)
+    #luDataLoader1 = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs1)
     luDataLoader1.landUse = luDataLoader1.loadData()
     luDataLoader1.lon, luDataLoader1.lat = luDataLoader1.getLonLat()
     luDataLoader1.cutEdge(taiwanDictBoundary)
 
-    luDataLoader2 = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs2)
+    luDataLoader2 = LandUseDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs2)
+    #luDataLoader2 = GeoDataLoader(anchorLon = 121, anchorlat=23.5, dataDirs=dataDirs2)
     luDataLoader2.landUse = luDataLoader2.loadData()
     luDataLoader2.lon, luDataLoader2.lat = luDataLoader2.getLonLat()
     luDataLoader2.cutEdge(taiwanDictBoundary)
 
     diffSys = DiffSys(luDataLoader1, luDataLoader2)
-    diff = diffSys.getDiff()
-    diffSys.drawDiffrence(diff, regionBound=taiwanDictBoundary, figsize=None)
+    #diff = diffSys.getDiff()
+    #diffSys.drawDiffrence(diff, regionBound=yunlinDictBoundary, figsize=None)
 
-    #urbanDiff = diffSys.getUrbanDiff()
-    #diffSys.drawUrbanDiffrence(urbanDiff, regionBound=taiwanDictBoundary, figsize=None)
+    urbanDiff = diffSys.getUrbanDiff()
+    diffSys.drawUrbanDiffrence(urbanDiff, regionBound=yunlinDictBoundary, figsize=None)
 
 

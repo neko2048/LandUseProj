@@ -1,0 +1,13 @@
+{
+    "landUseName": "NLSC2015datara", 
+    "folderDir": "/home/twsand/fskao/LandUseProj/data/NLSC2015datara/",
+	"fileName": "86401-93600.79201-86400",
+    "baseLon":   0.00069444,
+    "baseLat": -89.99930556,
+    "dx": 0.00138889,
+    "dy": 0.00138889,
+    "tilex": 7200,
+    "tiley": 7200,
+    "numType": 20,
+    "waterIdx": 17
+	}

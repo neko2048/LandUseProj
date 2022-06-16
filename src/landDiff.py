@@ -90,7 +90,9 @@ class DiffSys:
         ylabel('Latitude', fontsize=30)
         xticks(fontsize=30)
         yticks(fontsize=30)
-        savefig('{}_{}TaiwanDiff.jpg'.format(compareSys.landUseName, baseSys.landUseName), dpi=300)
+        xlim(120.01, 121.00)
+        ylim(23.4853847, 23.9194608)
+        savefig('{}_{}YunlinDiff.jpg'.format(compareSys.landUseName, baseSys.landUseName), dpi=300)
 
     def drawTaiwanDiffForESRI(self, baseSys, compareSys=esri):
         cmap = ListedColormap([x[0] for x in compareSys.colorMap.values()])
@@ -163,19 +165,19 @@ if __name__ == "__main__":
     MCJcompare.drawTaiwanDiff(baseSys=modis, compareSys=cjchen)
 
     # Modis, ESRI
-    MEcompare = DiffSys(modis, esri)
-    modis.sLon, modis.sLat, modis.southLandUse = cutPartEdge(modis.lon, modis.lat, modis.landUse,\
-                                                             dictBoundary=taiwanDictBoundary, type="south")
-    modis.nLon, modis.nLat, modis.northLandUse = cutPartEdge(modis.lon, modis.lat, modis.landUse,\
-                                                             dictBoundary=taiwanDictBoundary, type="north")
-    #MEcompare.drawYunlinDiff(baseSys=modis, compareSys=esri)
-    MEcompare.drawTaiwanDiffForESRI(baseSys=modis, compareSys=esri)
+    #MEcompare = DiffSys(modis, esri)
+    #modis.sLon, modis.sLat, modis.southLandUse = cutPartEdge(modis.lon, modis.lat, modis.landUse,\
+    #                                                         dictBoundary=taiwanDictBoundary, type="south")
+    #modis.nLon, modis.nLat, modis.northLandUse = cutPartEdge(modis.lon, modis.lat, modis.landUse,\
+    #                                                         dictBoundary=taiwanDictBoundary, type="north")
+    ##MEcompare.drawYunlinDiff(baseSys=modis, compareSys=esri)
+    #MEcompare.drawTaiwanDiffForESRI(baseSys=modis, compareSys=esri)
 
     # CJCHEN, ESRI
-    CJEcompare = DiffSys(cjchen, esri)
-    cjchen.sLon, cjchen.sLat, cjchen.southLandUse = cutPartEdge(cjchen.lon, cjchen.lat, cjchen.landUse,\
-                                                             dictBoundary=taiwanDictBoundary, type="south")
-    cjchen.nLon, cjchen.nLat, cjchen.northLandUse = cutPartEdge(cjchen.lon, cjchen.lat, cjchen.landUse,\
-                                                             dictBoundary=taiwanDictBoundary, type="north")
-    #MEcompare.drawYunlinDiff(baseSys=cjchen, compareSys=esri)
-    CJEcompare.drawTaiwanDiffForESRI(baseSys=cjchen, compareSys=esri)
+    #CJEcompare = DiffSys(cjchen, esri)
+    #cjchen.sLon, cjchen.sLat, cjchen.southLandUse = cutPartEdge(cjchen.lon, cjchen.lat, cjchen.landUse,\
+    #                                                         dictBoundary=taiwanDictBoundary, type="south")
+    #cjchen.nLon, cjchen.nLat, cjchen.northLandUse = cutPartEdge(cjchen.lon, cjchen.lat, cjchen.landUse,\
+    #                                                         dictBoundary=taiwanDictBoundary, type="north")
+    ##MEcompare.drawYunlinDiff(baseSys=cjchen, compareSys=esri)
+    #CJEcompare.drawTaiwanDiffForESRI(baseSys=cjchen, compareSys=esri)

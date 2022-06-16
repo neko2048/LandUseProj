@@ -127,9 +127,10 @@ class LandUseDataLoader:
         dlon = regionBound["endLon"] - regionBound["initLon"]
         dlat = regionBound["endLat"] - regionBound["initLat"]
         fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
-        pcolormesh(lon, lat, landUse, 
-        vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
+        pcolormesh(lon, lat, landUse,# cmap=cmap, vmin=50, vmax=100)
+                   vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
+        #cb = colorbar()#ticks=[float(x) for x in (cmapTick)])
         cb.set_ticklabels(cmapTick)
         cb.ax.tick_params(labelsize=17)
 
@@ -198,7 +199,7 @@ class GeoDataLoader(LandUseDataLoader):
         dlon = regionBound["endLon"] - regionBound["initLon"]
         dlat = regionBound["endLat"] - regionBound["initLat"]
         fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20+4, 20)))
-        pcolormesh(lon, lat, landUse, 
+        pcolormesh(lon, lat, landUse,
         vmin=np.min(list(map(int, self.colorMap.keys())))-0.5, vmax=np.max(list(map(int, self.colorMap.keys())))+0.5, cmap=cmap)
         cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         cb.set_ticklabels(cmapTick)
@@ -226,12 +227,14 @@ class GeoDataLoader(LandUseDataLoader):
 
 if __name__ == "__main__":
     dataDirs = {
-    #"landUseInfo": "../data/MODIS_5s.json", 
+    "landUseInfo": "../data/MODIS_5s.json", 
     #"landUseInfo": "../data/MODIS_15s.json",
-    "landUseInfo": "../data/MODIS_5s_NLSC2015.json",
+    #"landUseInfo": "../data/MODIS_5s_NLSC2015.json",
+    #"landUseInfo": "../data/NLSC2015datara.json",
     #"landUseInfo": "../data/NLSC2015Nearest1km.json",
     #"landUseInfo": "../data/MODIS_15s.json",
     "colorMap": "../data/loachColor/modis20types.json", 
+    #"colorMap": "../data/LUpercent.json", 
     "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
     #"countyNumMap": "../data/geo1km.npy",
     }
@@ -268,8 +271,8 @@ if __name__ == "__main__":
     #luDataLoader.cutEdge(yunlinDictBoundary)
     #luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=(17, 6))
     #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, labelBound=yunlinDictBoundary, figsize=(20, 20))
-    #luDataLoader.drawRegion(regionBound=taiwanDictBoundary, figsize=None)
+    luDataLoader.drawRegion(regionBound=yunlinDictBoundary, figsize=None)
     #luDataLoader.drawRegion(regionBound=taipeiDictBoundary, figsize=None)
-    luDataLoader.getEveryCatRatio()
+    #luDataLoader.getEveryCatRatio()
 
 
