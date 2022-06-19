@@ -9,7 +9,7 @@ class DiffSys():
         self.dataLoader1 = dataLoader1
         self.dataLoader2 = dataLoader2
 
-    def getDiff(self):
+    def getTotalDiff(self):
         if self.dataLoader2.landUse.shape[0] * self.dataLoader2.landUse.shape[1] >= \
            self.dataLoader1.landUse.shape[0] * self.dataLoader1.landUse.shape[1]:
            largeArray = self.dataLoader2.landUse
@@ -33,18 +33,19 @@ class DiffSys():
                     diff[i, j] = smallArray[i, j]
         return diff
 
-    def getUrbanDiff(self):
+    def getDiff(self, diffIdx):
         array1 = self.dataLoader1.landUse
         array2 = self.dataLoader2.landUse
 
         diff = np.zeros(self.dataLoader1.landUse.shape)
-        urban1 = array1 == 13
-        urban2 = array2 == 13
+        urban1 = array1 == diffIdx
+        urban2 = array2 == diffIdx
         diff[urban1] = 1
         diff[urban2] = 2
         diff[np.logical_and(urban1, urban2)] = 3
         # 3: common, 2: dataLoader2, 1: dataLoader1
         return diff
+
 
     def drawDiffrence(self, diff, regionBound, labelBound=None, figsize=None):
         cmap = ListedColormap([x[0] for x in self.dataLoader1.colorMap.values()])
@@ -88,7 +89,7 @@ class DiffSys():
         title('{d1} versus {d2} \n {d1}'.format(d1=self.dataLoader1.landUseName, d2=self.dataLoader2.landUseName), fontsize=30)
         savefig("Diff_{d1}_{d2}_{d1}_{rg}.jpg".format(d1=self.dataLoader1.landUseName, d2=self.dataLoader2.landUseName, rg=regionBound["regionName"]), dpi=300)
 
-    def drawUrbanDiffrence(self, urbanDiff, regionBound, labelBound=None, figsize=None):
+    def drawUrbanDiffrence(self, diff, regionBound, labelBound=None, figsize=None):
         cmap = ListedColormap(["red", "blue", "green"])
         cmapTick = [self.dataLoader1.landUseName, self.dataLoader2.landUseName, "Common"]
         baseLon = self.dataLoader1.lon
@@ -103,7 +104,7 @@ class DiffSys():
         #cb = colorbar(ticks=[x for x in range(1, len(cmapTick)+1)])
         #cb.set_ticklabels(cmapTick)
         #cb.ax.tick_params(labelsize=17)
-        pcolormesh(baseLon, baseLat, np.ma.masked_array(urbanDiff, urbanDiff == 0), 
+        pcolormesh(baseLon, baseLat, np.ma.masked_array(diff, diff == 0), 
                    cmap=cmap, edgecolor=None, vmin=0.5, vmax=3.5)
         #cb = colorbar(ticks=[1, 2, 3])
         #cb.set_ticklabels(cmapTick)
@@ -130,6 +131,53 @@ class DiffSys():
         savefig("urbanDiff_{d1}_{d2}_{d1}_{rg}.jpg".format(d1=self.dataLoader1.landUseName, d2=self.dataLoader2.landUseName, rg=regionBound["regionName"]), dpi=300)
 
 
+    def drawInnerWaterDiffrence(self, diff, regionBound, labelBound=None, figsize=None):
+        cmap = ListedColormap(["white", "red", "blue", "green"])
+        cmapTick = [self.dataLoader1.landUseName, self.dataLoader2.landUseName, "Common"]
+        baseLon = self.dataLoader1.lon
+        baseLat = self.dataLoader1.lat
+        baseLandUse = self.dataLoader1.landUse
+        dlon = regionBound["endLon"] - regionBound["initLon"]
+        dlat = regionBound["endLat"] - regionBound["initLat"]
+        fig = subplots(1, 1, figsize=(figsize or (dlon/dlat*20, 20)))
+        if hasattr(self.dataLoader1, "countyNumMap"):
+            diff[np.isnan(self.dataLoader1.countyNumMap)] = 0
+            countyNumMap = self.dataLoader1.countyNumMap
+            uniqueCountNum = np.unique(self.dataLoader1.countyNumMap)
+            uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+            contour(baseLon, baseLat, ~np.isnan(countyNumMap), colors='grey')
+            for i in uniqueCountNum:
+                contour(baseLon, baseLat, countyNumMap==i, colors='grey')
+        pcolormesh(baseLon, baseLat, np.ma.masked_array(diff, diff == 0), \
+                   cmap=cmap, edgecolor=None, vmin=-0.5, vmax=3.5, zorder=4)
+
+        if labelBound:
+            plot([labelBound["initLon"], labelBound["endLon"], \
+			     labelBound["endLon"], labelBound["initLon"], labelBound["initLon"]], \
+                 [labelBound["initLat"], labelBound["initLat"], \
+				 labelBound["endLat"], labelBound["endLat"], labelBound["initLat"]], 
+                 color='red', linewidth=10)
+        #if hasattr(self.dataLoader1, "countyNumMap"):
+        #    countyNumMap = self.dataLoader1.countyNumMap
+        #    uniqueCountNum = np.unique(self.dataLoader1.countyNumMap)
+        #    uniqueCountNum = uniqueCountNum[~np.isnan(uniqueCountNum)]
+        #    contour(baseLon, baseLat, ~np.isnan(countyNumMap), colors='grey')
+        #    for i in uniqueCountNum:
+        #        contour(baseLon, baseLat, countyNumMap==i, colors='grey')
+        xlabel('Longitude', fontsize=30)
+        ylabel('Latitude', fontsize=30)
+        xticks(fontsize=30)
+        yticks(fontsize=30)
+        xlim(regionBound['initLon'], regionBound['endLon'])
+        ylim(regionBound['initLat'], regionBound['endLat'])
+        title('{d1} (Red) versus \n{d2} (Blue)\nCommon (Green)' \
+			  .format(d1=self.dataLoader1.landUseName, d2=self.dataLoader2.landUseName), \
+			  fontsize=30)
+        savefig("waterDiff_{d1}_{d2}_{d1}_{rg}.jpg" \
+		.format(d1=self.dataLoader1.landUseName, d2=self.dataLoader2.landUseName, rg=regionBound["regionName"]), \
+		dpi=300)
+
+
 if __name__ == "__main__":
     dataDirs2 = {
     #"landUseInfo": "../data/MODIS_5s1km.json", 
@@ -144,6 +192,7 @@ if __name__ == "__main__":
     "landUseInfo": "../data/MODIS_5s_NLSC2015.json", 
     "colorMap": "../data/loachColor/modis20types.json", 
     "countyNumMap": "../data/MODIS_5s_countyNumMap.npy",
+    #"countyNumMap": "../data/geo1km.npy",
     }
 
     taiwanDictBoundary = {
@@ -176,7 +225,10 @@ if __name__ == "__main__":
     #diff = diffSys.getDiff()
     #diffSys.drawDiffrence(diff, regionBound=yunlinDictBoundary, figsize=None)
 
-    urbanDiff = diffSys.getUrbanDiff()
-    diffSys.drawUrbanDiffrence(urbanDiff, regionBound=yunlinDictBoundary, figsize=None)
+	#urbanDiff = diffSys.getDiff(diffIdx=13)
+    #diffSys.drawUrbanDiffrence(urbanDiff, regionBound=taiwanDictBoundary, figsize=None)
+
+    waterDiff = diffSys.getDiff(diffIdx=17)
+    diffSys.drawInnerWaterDiffrence(waterDiff, regionBound=taiwanDictBoundary, figsize=None)
 
 
